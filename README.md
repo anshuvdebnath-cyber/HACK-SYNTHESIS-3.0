@@ -1,4 +1,4 @@
-# HACK-SYNTHESIS-3.0
+# REPOVITAL
 
 An advanced dependency health and software abandonment auditing backend powered by the **MALTA (Maintenance-Aware Technical Lag and Technical Abandonment)** framework (arXiv:2603.10265v1).
 
