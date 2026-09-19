@@ -1,3 +1,4 @@
+import { MaltaScanningOverlay } from './MaltaScanningOverlay';
 import React, { useState } from 'react';
 import { 
   ResponsiveContainer, 
@@ -283,46 +284,7 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({
   ];
 
   if (isScanning) {
-    return (
-      <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-slate-200/90 p-8 sm:p-12 text-center shadow-lg my-6">
-        <div className="max-w-md mx-auto space-y-6">
-          <div className="relative w-20 h-20 mx-auto">
-            <div className="absolute inset-0 rounded-full border-4 border-emerald-100 animate-ping opacity-60" />
-            <div className="relative w-20 h-20 rounded-full bg-emerald-50 border-2 border-emerald-500 flex items-center justify-center text-emerald-600 shadow-md">
-              <Zap className="w-8 h-8 animate-bounce" />
-            </div>
-          </div>
-
-          <div>
-            <h2 className="text-xl font-bold font-display text-slate-900">
-              Evaluating MALTA Formula
-            </h2>
-            <div className="font-mono text-xs text-emerald-700 bg-emerald-50 py-1 px-3 rounded-full inline-block mt-2 border border-emerald-200">
-              100 × (0.55 × DAS + 0.35 × MRS + 0.10 × RMVS)
-            </div>
-          </div>
-
-          <div className="space-y-2 text-left bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs font-mono">
-            <div className="flex items-center gap-2 text-emerald-700">
-              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-              <span>[1/4] DAS = min(1, λe/λb) × e^(−t_last/180)</span>
-            </div>
-            <div className="flex items-center gap-2 text-emerald-700">
-              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-              <span>[2/4] MRS = R_dec × (1 − D_dec) × (1 − P_stale)</span>
-            </div>
-            <div className="flex items-center gap-2 text-blue-700 font-semibold animate-pulse">
-              <Activity className="w-3.5 h-3.5 shrink-0 animate-spin" />
-              <span>[3/4] Ghost Condition: Version_Lag == LOW ∧ Maintenance_Lag &gt; 365d</span>
-            </div>
-            <div className="flex items-center gap-2 text-slate-400">
-              <span className="w-3.5 h-3.5 rounded-full border border-slate-300 inline-block" />
-              <span>[4/4] Mapping 5-Level Scale: [0, 19] | [20, 39] | [40, 59] | [60, 79] | [80, 100]</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <MaltaScanningOverlay />;
   }
 
   const scaleBands = [

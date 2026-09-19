@@ -72,7 +72,7 @@ export default function App() {
       
 
       {/* Main Slide Content Area */}
-      <main className="flex-1 max-w-7xl mx-auto px-4 md:px-8 pt-24 sm:pt-28 pb-16 w-full flex flex-col justify-center">
+      <main className="flex-1 max-w-7xl mx-auto px-4 md:px-8 pt-28 sm:pt-36 pb-16 w-full flex flex-col justify-center">
         <AnimatePresence mode="wait">
           {currentSlide === 'hero' && (
             <motion.div
