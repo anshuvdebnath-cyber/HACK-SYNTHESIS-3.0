@@ -8,6 +8,7 @@ const {
     calculateMALTA_FinalScore
 } = require('../services/malta.service');
 const { getGithubUrl, parseGithubRepo } = require('../utils/helpers');
+const { extractGithubUrlsFromLatex } = require('../services/latex.service');
 
 // Per-package timeout helper preventing long-hanging audits
 const withTimeout = (promise, ms) =>
@@ -244,7 +245,133 @@ async function auditRequirements(req, res) {
     res.json({ count: results.length, dependencies: results });
 }
 
+
+/**
+ * Controller: Extracts GitHub repository links from an uploaded LaTeX manuscript (.tex) and runs MALTA scoring
+ */
+async function auditLatex(req, res) {
+    if (!req.file) {
+        return res.status(400).json({ error: "Please upload a .tex file" });
+    }
+
+    const latexContent = req.file.buffer.toString('utf-8');
+    const urls = extractGithubUrlsFromLatex(latexContent);
+
+    if (!urls || urls.length === 0) {
+        return res.status(400).json({ error: "No GitHub repository links found in the LaTeX file." });
+    }
+
+    console.log(`📄 Found ${urls.length} GitHub links in LaTeX file`);
+
+    const results = [];
+    const auditStartTime = Date.now();
+    let successCount = 0;
+    let failCount = 0;
+
+    // Define MALTA observation windows: We = 18 months, Wb = 24 months before We
+    const now = new Date();
+    const weStart = new Date(now);
+    weStart.setMonth(weStart.getMonth() - 18);
+
+    const wbStart = new Date(weStart);
+    wbStart.setMonth(wbStart.getMonth() - 24);
+
+    const token = process.env.GITHUB_TOKEN;
+
+    // Process repositories SEQUENTIALLY to respect service rate limits and pacing
+    for (let idx = 0; idx < urls.length; idx++) {
+        const url = urls[idx];
+        const repoInfo = parseGithubRepo(url);
+
+        if (!repoInfo) {
+            console.log(`[${idx + 1}/${urls.length}] Skipping invalid GitHub URL: ${url}`);
+            continue;
+        }
+
+        const { owner, repo } = repoInfo;
+        const repoName = `${owner}/${repo}`;
+        const repoStartTime = Date.now();
+        console.log(`[${idx + 1}/${urls.length}] Processing: ${repoName}`);
+
+        try {
+            // Wrap single repository processing in 30-second circuit breaker
+            const repoResult = await withTimeout((async () => {
+                const { repoData, allCommits, latestCommitOverall, pulls } = await fetchRepoDataWithCache(
+                    owner,
+                    repo,
+                    token,
+                    wbStart,
+                    weStart
+                );
+
+                const isArchived = Boolean(repoData.archived);
+                const lastPush = new Date(repoData.pushed_at);
+                const maintenanceLagDays = Math.floor((now - lastPush) / (1000 * 60 * 60 * 24));
+
+                const rmvsResult = calculateMALTA_RMVS(repoData);
+                const dasResult = calculateMALTA_DAS(allCommits, latestCommitOverall, wbStart, weStart, now);
+                const mrsResult = calculateMALTA_MRS(pulls, now);
+
+                if (isArchived === true && !mrsResult.mrsDefined) {
+                    if (mrsResult.mrsDetails) {
+                        mrsResult.mrsDetails.archivedOverride = true;
+                    }
+                }
+
+                const finalResult = calculateMALTA_FinalScore(
+                    dasResult.devActivityScore,
+                    mrsResult.maintRespScore,
+                    rmvsResult.metadataScore,
+                    mrsResult.mrsDefined,
+                    isArchived
+                );
+
+                // Pure MALTA schema for LaTeX repositories (no PyPI-dependent fields)
+                return {
+                    name: repoName,
+                    currentVersion: null,
+                    latestVersion: null,
+                    devActivityScore: dasResult.devActivityScore,
+                    maintRespScore: mrsResult.maintRespScore,
+                    mrsDefined: mrsResult.mrsDefined,
+                    metadataScore: rmvsResult.metadataScore,
+                    finalScore: finalResult.finalScore,
+                    riskLevel: finalResult.riskLevel,
+                    maintenanceLagDays: maintenanceLagDays,
+                    dasDetails: dasResult.dasDetails,
+                    mrsDetails: mrsResult.mrsDetails,
+                    rmvsDetails: rmvsResult.rmvsDetails
+                };
+            })(), 30000);
+
+            results.push(repoResult);
+            successCount++;
+            const elapsed = Date.now() - repoStartTime;
+            console.log(`   ✔️  ${repoName} done in ${elapsed}ms`);
+        } catch (error) {
+            failCount++;
+            const elapsed = Date.now() - repoStartTime;
+            console.error(`   ❌ ${repoName} failed in ${elapsed}ms: ${error.message}`);
+            if (error.message === 'Package audit timeout') {
+                results.push({ name: repoName, error: 'Timeout' });
+            } else {
+                results.push({ name: repoName, error: error.message });
+            }
+        }
+    }
+
+    const totalMs = Date.now() - auditStartTime;
+    console.log(`🏁 LaTeX audit complete: ${successCount} succeeded, ${failCount} failed in ${totalMs}ms`);
+
+    res.json({
+        count: results.length,
+        source: "latex",
+        dependencies: results
+    });
+}
+
 module.exports = {
     getTestPypi,
-    auditRequirements
+    auditRequirements,
+    auditLatex
 };
