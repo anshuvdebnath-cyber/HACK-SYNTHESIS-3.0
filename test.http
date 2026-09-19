@@ -1,0 +1,34 @@
+### 1. Test PyPI Connectivity
+GET http://localhost:3003/api/test-pypi
+
+### 2. Fast Audit (Core Dependencies)
+POST http://localhost:3003/api/audit
+Content-Type: application/json
+
+{
+  "requirements": "numpy==1.19.5\nrequests==2.31.0"
+}
+
+### 3. Full Research Stack Audit (Data Science & Web)
+POST http://localhost:3003/api/audit
+Content-Type: application/json
+
+{
+  "requirements": "numpy==1.19.5\npandas==1.3.0\nrequests==2.31.0\nflask==2.3.0\nseaborn==0.13.2"
+}
+
+### 4. Sedentary & Discordant Dependency Audit
+POST http://localhost:3003/api/audit
+Content-Type: application/json
+
+{
+  "requirements": "numpy==1.19.5\npymorphy2==0.9.1\nrequests==2.31.0"
+}
+
+### 5. Multi-Package Production Stack Audit
+POST http://localhost:3003/api/audit
+Content-Type: application/json
+
+{
+  "requirements": "requests==2.32.3\npip==25.1.1\npymongo==4.12.1\nflask==3.0.0\nseaborn==0.13.2"
+}
