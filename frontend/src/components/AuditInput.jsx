@@ -1,42 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { FileText, Upload, Play, RefreshCw, Layers, Sparkles } from 'lucide-react';
-
-const PRESETS = [
-  {
-    id: 'datascience',
-    title: 'Modern ML Stack',
-    desc: 'numpy, pandas, requests',
-    type: 'requirements',
-    value: 'numpy==1.19.5\npandas==1.3.0\nrequests==2.31.0'
-  },
-  {
-    id: 'mature',
-    title: 'Mature Pulse Test',
-    desc: 'seaborn==0.13.2 (Proof of Life)',
-    type: 'requirements',
-    value: 'seaborn==0.13.2'
-  },
-  {
-    id: 'zombie',
-    title: 'Ghost / Zombie Test',
-    desc: 'pymorphy2==0.9.1 (Flatlined 6y)',
-    type: 'requirements',
-    value: 'pymorphy2==0.9.1'
-  },
-  {
-    id: 'latex',
-    title: 'Academic Manuscript',
-    desc: 'sample.tex (numpy, flask, requests)',
-    type: 'latex',
-    value: `\\documentclass{article}
-\\begin{document}
-\\section{Software Availability}
-The core implementation is hosted at \\href{https://github.com/numpy/numpy}{GitHub}.
-Microservices were configured using \\url{https://github.com/pallets/flask}.
-Data ingestion via: https://github.com/psf/requests
-\\end{document}`
-  }
-];
+import { FileText, Upload, Play, RefreshCw, Layers } from 'lucide-react';
 
 export default function AuditInput({ onRunAudit, loading }) {
   const [activeTab, setActiveTab] = useState('requirements');
@@ -44,19 +7,6 @@ export default function AuditInput({ onRunAudit, loading }) {
   const [latexFile, setLatexFile] = useState(null);
   const [latexTextPreview, setLatexTextPreview] = useState('');
   const fileInputRef = useRef(null);
-
-  const handlePreset = (preset) => {
-    if (preset.type === 'requirements') {
-      setActiveTab('requirements');
-      setReqText(preset.value);
-    } else {
-      setActiveTab('latex');
-      const blob = new Blob([preset.value], { type: 'text/plain' });
-      const file = new File([blob], 'sample.tex', { type: 'text/plain' });
-      setLatexFile(file);
-      setLatexTextPreview(preset.value);
-    }
-  };
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -116,26 +66,6 @@ export default function AuditInput({ onRunAudit, loading }) {
       </div>
 
       <form onSubmit={handleSubmit} className="p-6">
-        {/* Preset Selector */}
-        <div className="mb-4">
-          <span className="text-[11px] uppercase font-bold tracking-wider text-[#6E6A63] block mb-2 font-mono">
-            Curated Evaluation Presets
-          </span>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {PRESETS.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => handlePreset(p)}
-                className="text-left p-2.5 bg-[#FAF8F5] hover:bg-[#F2ECE1] border border-[#E3DED4] transition-colors"
-              >
-                <div className="text-xs font-bold text-[#141413] truncate">{p.title}</div>
-                <div className="text-[10px] text-[#6E6A63] truncate font-mono">{p.desc}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* Input Area */}
         {activeTab === 'requirements' ? (
           <div>
@@ -145,7 +75,7 @@ export default function AuditInput({ onRunAudit, loading }) {
             <textarea
               value={reqText}
               onChange={(e) => setReqText(e.target.value)}
-              rows={4}
+              rows={5}
               placeholder="numpy==1.19.5&#10;seaborn==0.13.2&#10;pymorphy2==0.9.1"
               className="w-full p-3 font-mono text-xs bg-[#FAF8F5] border border-[#E3DED4] focus:outline-none focus:border-[#141413] text-[#141413] leading-relaxed resize-y"
             />
