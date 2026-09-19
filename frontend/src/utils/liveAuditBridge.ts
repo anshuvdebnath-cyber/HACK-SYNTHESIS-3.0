@@ -1,35 +1,102 @@
-import { AuditInput, MaltaAuditResult, DependencyNode, AuditIssue, MaltaMaintenanceLevel } from '../types';
+﻿import { AuditInput, MaltaAuditResult, DependencyNode, AuditIssue, MaltaMaintenanceLevel } from '../types';
 import { generateDecayCurve } from '../data/mockData';
-import { runMaltaAudit } from './maltaEngine';
+
+function sanitizeRequirements(raw: string): string {
+  return raw
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line && !line.startsWith('#'))
+    .map(line => {
+      const match = line.match(/^([a-zA-Z0-9_\-\.]+)(?:[=><~!]=?([0-9a-zA-Z\.\-_]+))?/);
+      if (match) {
+        return match[2] ? `${match[1]}==${match[2]}` : match[1];
+      }
+      return line;
+    })
+    .join('\n');
+}
+
+function extractRepoSlug(urlOrSlug: string): string | null {
+  if (!urlOrSlug) return null;
+  const trimmed = urlOrSlug.trim();
+  if (trimmed.includes('(') || trimmed.includes(',')) return null;
+
+  const match = trimmed.match(/(?:github\.com\/)?([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)/);
+  if (match) {
+    const owner = match[1].replace(/[\.,;:?\}>)\]\\]+$/, '');
+    const repo = match[2].replace(/[\.,;:?\}>)\]\\]+$/, '').replace(/\.git$/, '');
+    const reserved = ['features', 'pricing', 'enterprise', 'topics', 'trending', 'collections', 'events', 'about', 'contact', 'login', 'signup'];
+    if (!reserved.includes(owner.toLowerCase())) {
+      return `${owner}/${repo}`;
+    }
+  }
+  return null;
+}
 
 export async function runLiveMaltaAudit(input: AuditInput): Promise<MaltaAuditResult> {
-  const manifest = input.manifestContent || '';
+  const backendDependencies: any[] = [];
+  const repoSlug = extractRepoSlug(input.repoUrl || '');
+  const manifest = (input.manifestContent || '').trim();
 
-  // If there are dependencies, query the live MALTA backend on port 3003
-  if (manifest.trim().length > 0) {
+  // 1. If a GitHub repository is provided (e.g. karpathy/nanoGPT or pasted GitHub URL)
+  if (repoSlug) {
     try {
-      const response = await fetch('/api/audit', {
+      const boundary = '----WebKitFormBoundary' + Math.random().toString(36).substring(2);
+      const latexContent = `\\documentclass{article}\\begin{document}\\url{https://github.com/${repoSlug}}\\end{document}`;
+      const body = `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="repo.tex"\r\nContent-Type: application/x-tex\r\n\r\n${latexContent}\r\n--${boundary}--\r\n`;
+
+      const repoRes = await fetch('/api/audit-latex', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requirements: manifest })
+        headers: {
+          'Content-Type': `multipart/form-data; boundary=${boundary}`
+        },
+        body
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.dependencies && data.dependencies.length > 0) {
-          return mapBackendToAuditResult(data.dependencies);
+      if (repoRes.ok) {
+        const repoData = await repoRes.json();
+        if (repoData.dependencies && repoData.dependencies.length > 0) {
+          backendDependencies.push(...repoData.dependencies);
         }
       }
-    } catch (err) {
-      console.warn('Live backend audit failed, falling back to local engine:', err);
+    } catch (e) {
+      console.warn('Live audit-latex request failed for repo:', repoSlug, e);
     }
   }
 
-  // Fallback to local engine
-  return runMaltaAudit(input);
+  // 2. If a manifest is provided (e.g. packages from preset or uploaded/pasted requirements.txt)
+  if (manifest.length > 0) {
+    const sanitized = sanitizeRequirements(manifest);
+    // Take top 4 packages to ensure rapid real-time response from backend
+    const pkgLines = sanitized.split('\n').filter(Boolean).slice(0, 4).join('\n');
+
+    try {
+      const auditRes = await fetch('/api/audit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requirements: pkgLines })
+      });
+
+      if (auditRes.ok) {
+        const auditData = await auditRes.json();
+        if (auditData.dependencies && auditData.dependencies.length > 0) {
+          backendDependencies.push(...auditData.dependencies);
+        }
+      }
+    } catch (e) {
+      console.warn('Live audit requirements failed:', e);
+    }
+  }
+
+  // 3. Map real backend outputs into the rich frontend dashboard schema
+  if (backendDependencies.length > 0) {
+    return mapBackendToAuditResult(backendDependencies, repoSlug);
+  }
+
+  throw new Error('Could not connect to live MALTA engine on port 3003. Please ensure backend is running.');
 }
 
-function mapBackendToAuditResult(backendDeps: any[]): MaltaAuditResult {
+function mapBackendToAuditResult(backendDeps: any[], repoSlug?: string | null): MaltaAuditResult {
   const dependencies: DependencyNode[] = backendDeps.map((dep: any) => {
     const instVer = dep.currentVersion ? (dep.currentVersion.startsWith('v') ? dep.currentVersion : `v${dep.currentVersion}`) : 'v1.0.0';
     const latVer = dep.latestVersion ? (dep.latestVersion.startsWith('v') ? dep.latestVersion : `v${dep.latestVersion}`) : instVer;
@@ -60,10 +127,11 @@ function mapBackendToAuditResult(backendDeps: any[]): MaltaAuditResult {
     else if (isProof) indicators.push('Pulse Verified', 'Usage > 1M/mo');
     else if (isDiscordant) indicators.push('Discordant Ghost', 'Zero Version Lag');
     else if (finalScore >= 60) indicators.push('Active Triage', 'Healthy Cadence');
+    else if (finalScore < 30) indicators.push('High Stale PRs', 'Zero Commit Cadence');
 
     return {
       name: dep.name,
-      version: dep.currentVersion || 'unknown',
+      version: dep.currentVersion || 'latest',
       installedVersion: instVer,
       latestVersion: latVer,
       status,
@@ -71,10 +139,11 @@ function mapBackendToAuditResult(backendDeps: any[]): MaltaAuditResult {
       riskAssessment: dep.riskLevel || (finalScore >= 60 ? 'Low Risk' : finalScore >= 40 ? 'Moderate Risk' : 'Critical Abandonment'),
       healthIndicators: indicators,
       type: 'runtime',
-      description: dep.proofReason || (isZombie ? dep.zombieReason : `Audited dependency ${dep.name}`),
+      description: dep.proofReason || (isZombie ? dep.zombieReason : `Audited ${dep.name} via live MALTA Engine (Score: ${finalScore})`),
       lastCommit: das.tLastDays !== undefined ? `${das.tLastDays} days ago` : `${dep.maintenanceLagDays || 0} days ago`,
       versionLagDays: dep.timeLagDays || (dep.versionLag ? dep.versionLag * 365 : 0),
       maintenanceLagDays: dep.maintenanceLagDays || das.tLastDays || 0,
+      repositoryUrl: dep.name.includes('/') ? `https://github.com/${dep.name}` : `https://pypi.org/project/${dep.name}`,
       isDiscordant,
       dasScore,
       mrsScore,
@@ -149,16 +218,16 @@ function mapBackendToAuditResult(backendDeps: any[]): MaltaAuditResult {
 
   const issues: AuditIssue[] = [];
   dependencies.forEach(d => {
-    if (d.status === 'GHOST') {
+    if (d.status === 'GHOST' || d.maltaScore < 20) {
       issues.push({
-        id: `MALTA-GHOST-${d.name}`,
-        pillar: 'DISCORDANT',
-        pillarLabel: 'Special Sauce: Ghost Detection',
+        id: `MALTA-${d.name.replace(/[^a-zA-Z0-9]/g, '-')}`,
+        pillar: d.isDiscordant ? 'DISCORDANT' : 'ACTIVITY',
+        pillarLabel: d.isDiscordant ? 'Special Sauce: Ghost Detection' : 'Maintenance Decay',
         severity: 'critical',
-        title: `Zombie / Ghost Package: ${d.name}`,
-        description: `No commits for ${d.maintenanceLagDays} days despite being on latest release.`,
-        impact: 'Critical unmaintained upstream risk. Security CVEs and breaking changes will never be resolved.',
-        remediationCode: `pip uninstall ${d.name}`
+        title: `Decay Alert: ${d.name} (MALTA: ${d.maltaScore})`,
+        description: `No active maintenance cadence detected in observation window (${d.maintenanceLagDays} days lag).`,
+        impact: 'High abandonment risk. Security CVEs and upstream regressions will remain unpatched.',
+        remediationCode: d.name.includes('/') ? `git clone https://github.com/${d.name}` : `pip install --upgrade ${d.name}`
       });
     }
   });
@@ -243,7 +312,7 @@ function mapBackendToAuditResult(backendDeps: any[]): MaltaAuditResult {
       healthyCount: dependencies.length - discordantPackages.length,
       discordantPackages
     },
-    scanDuration: 'Live Engine Call',
+    scanDuration: 'Live Backend Calculation',
     timestamp: new Date().toISOString(),
     hash: `live:${Date.now().toString(16)}`,
     dependencies,

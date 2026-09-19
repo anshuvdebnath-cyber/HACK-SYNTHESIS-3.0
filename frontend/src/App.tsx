@@ -28,15 +28,19 @@ export default function App() {
 
   const [auditResult, setAuditResult] = useState<MaltaAuditResult>(INITIAL_AUDIT_RESULT);
 
-  const handleStartAudit = () => {
+  const handleStartAudit = async () => {
     setIsScanning(true);
     setCurrentSlide('dashboard');
 
-    setTimeout(() => {
-      const result = runMaltaAudit(input);
+    try {
+      console.log('🚀 Executing live backend MALTA audit for:', input);
+      const result = await runLiveMaltaAudit(input);
       setAuditResult(result);
+    } catch (err) {
+      console.error('Audit execution error:', err);
+    } finally {
       setIsScanning(false);
-    }, 1800);
+    }
   };
 
   return (
