@@ -31,10 +31,6 @@ export const TopNav: React.FC<TopNavProps> = ({
               <span className="text-2xl sm:text-3xl lg:text-3.5xl font-display font-extrabold tracking-tight bg-gradient-to-r from-slate-950 via-emerald-800 to-teal-700 bg-clip-text text-transparent group-hover:from-emerald-700 group-hover:to-teal-600 transition-all duration-200">
                 RepoVitals
               </span>
-              <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-[10px] font-mono font-bold text-emerald-800 shadow-2xs">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                MALTA v1.0
-              </span>
             </div>
           </button>
         </div>

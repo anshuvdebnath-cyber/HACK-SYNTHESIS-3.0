@@ -227,7 +227,7 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({
     || auditResult.dependencies[0] 
     || null;
 
-  const isScreenshotError = simulationMode === 'SCREENSHOT_ERROR';
+  const isScreenshotError = false;
 
   // Active specimen for the deep 3-pillars cards:
   // If syncWithPillars is true, clicking any row automatically updates the deep pillar cards and multi-pillar pie too!
@@ -474,30 +474,11 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {/* Simulation mode switch */}
-            <div className="inline-flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 text-[11px] font-mono">
-              <button
-                onClick={() => setSimulationMode('EVALUATED')}
-                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer font-bold ${
-                  simulationMode === 'EVALUATED'
-                    ? 'bg-white text-emerald-800 shadow-xs border border-emerald-200'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
+            {/* Live Evaluated Status Badge */}
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] font-mono font-bold text-emerald-800 shadow-xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Live Evaluated
-              </button>
-              <button
-                onClick={() => setSimulationMode('SCREENSHOT_ERROR')}
-                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer font-bold ${
-                  simulationMode === 'SCREENSHOT_ERROR'
-                    ? 'bg-white text-rose-700 shadow-xs border border-rose-200'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-                title="Simulates unknown repository state from user photo"
-              >
-                Screenshot Mode (No Repo)
-              </button>
-            </div>
+              </div>
 
             {/* Filter Pills */}
             <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200 text-xs font-mono">
