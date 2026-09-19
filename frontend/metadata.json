@@ -1,0 +1,6 @@
+{
+  "name": "RepoVitals",
+  "description": "Scientific code reproducibility and dependency drift auditor utilizing the MALTA v1.0 methodology to generate specific and collective scores.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
