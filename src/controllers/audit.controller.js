@@ -1,3 +1,4 @@
+// Audit controller orchestrating sequential, throttled dependency evaluation with MALTA scoring
 const { fetchPackageMetadata, fetchPypiDownloadStats } = require('../services/pypi.service');
 const { fetchRepoDataWithCache } = require('../services/github.service');
 const {
@@ -7,6 +8,15 @@ const {
     calculateMALTA_FinalScore
 } = require('../services/malta.service');
 const { getGithubUrl, parseGithubRepo } = require('../utils/helpers');
+
+// Per-package timeout helper preventing long-hanging audits
+const withTimeout = (promise, ms) =>
+    Promise.race([
+        promise,
+        new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Package audit timeout')), ms)
+        )
+    ]);
 
 /**
  * Controller: Verifies outbound connectivity with PyPI
@@ -26,7 +36,7 @@ async function getTestPypi(req, res) {
 }
 
 /**
- * Controller: Audits a list of dependencies using the MALTA framework
+ * Controller: Audits a list of dependencies sequentially using the MALTA framework
  */
 async function auditRequirements(req, res) {
     const { requirements } = req.body;
@@ -37,7 +47,24 @@ async function auditRequirements(req, res) {
     }
 
     const lines = requirements.split('\n');
+    const parsedPackages = [];
+
+    // Parse non-empty, non-comment lines
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('#')) {
+            const [rawName, rawVersion] = trimmed.split('==');
+            parsedPackages.push({
+                name: rawName.trim(),
+                version: rawVersion ? rawVersion.trim() : null
+            });
+        }
+    }
+
     const results = [];
+    const auditStartTime = Date.now();
+    let successCount = 0;
+    let failCount = 0;
 
     // Define MALTA observation windows: We = 18 months, Wb = 24 months before We
     const now = new Date();
@@ -47,14 +74,15 @@ async function auditRequirements(req, res) {
     const wbStart = new Date(weStart);
     wbStart.setMonth(wbStart.getMonth() - 24);
 
-    for (const line of lines) {
-        const trimmed = line.trim();
-        if (trimmed && !trimmed.startsWith('#')) {
-            const [rawName, rawVersion] = trimmed.split('==');
-            const name = rawName.trim();
-            const version = rawVersion ? rawVersion.trim() : null;
+    // Process packages SEQUENTIALLY to respect service rate limits and pacing
+    for (let idx = 0; idx < parsedPackages.length; idx++) {
+        const { name, version } = parsedPackages[idx];
+        const packageStartTime = Date.now();
+        console.log(`[${idx + 1}/${parsedPackages.length}] Processing: ${name}`);
 
-            try {
+        try {
+            // Wrap single package audit in 30-second circuit breaker
+            const packageResult = await withTimeout((async () => {
                 // Fetch package metadata from PyPI
                 const response = await fetchPackageMetadata(name);
 
@@ -109,18 +137,31 @@ async function auditRequirements(req, res) {
                     }
                 }
 
-                // PROOF OF LIFE OVERRIDE: Check monthly downloads if package is flagged as at-risk
+                // PROOF OF LIFE & ZOMBIE/GHOST DETECTION
+                // Gate A: Mature package override requires >= 1M downloads AND active repository pulse (<= 730 days)
+                // Gate B: Ghost / Zombie dependency flagged if >= 100k downloads but zero pulse (> 730 days dead)
                 let proofOverride = false;
                 let proofReason = null;
+                let isZombie = false;
+                let zombieReason = null;
 
                 if (finalResult && finalResult.finalScore !== null &&
                     (finalResult.riskLevel === "Probable Abandonment" || finalResult.riskLevel === "Effective Abandonment")) {
                     const monthlyDownloads = await fetchPypiDownloadStats(name);
-                    if (monthlyDownloads && monthlyDownloads > 100000) {
+                    const lastCommitDays = dasResult?.dasDetails?.tLastDays ?? maintenanceLagDays;
+                    const hasPulse = lastCommitDays !== null && lastCommitDays <= 730;
+
+                    if (monthlyDownloads && monthlyDownloads >= 1000000 && hasPulse) {
+                        // Mature & Stable: High adoption with recent maintainer activity
                         finalResult.finalScore = Math.max(finalResult.finalScore, 65);
                         finalResult.riskLevel = "Sustained Maintenance (Mature)";
                         proofOverride = true;
-                        proofReason = "High real-world usage detected (over 100,000 monthly downloads).";
+                        proofReason = `High real-world adoption detected (${monthlyDownloads.toLocaleString()} monthly downloads with active repository pulse).`;
+                    } else if (monthlyDownloads && monthlyDownloads >= 100000 && !hasPulse) {
+                        // Ghost / Zombie: Heavy real-world dependency on completely abandoned code
+                        isZombie = true;
+                        zombieReason = `Zombie Dependency (Ghost): ${monthlyDownloads.toLocaleString()} monthly downloads despite no maintenance in ${lastCommitDays} days. Critical unmaintained upstream risk.`;
+                        finalResult.riskLevel = "Zombie Dependency (Ghost)";
                     }
                 }
 
@@ -155,7 +196,7 @@ async function auditRequirements(req, res) {
                     finalResult.finalScore < 40
                 );
 
-                results.push({
+                return {
                     name: name,
                     currentVersion: version ? version : 'unknown',
                     latestVersion: response.info.version,
@@ -171,20 +212,34 @@ async function auditRequirements(req, res) {
                     isDiscordant: isDiscordant,
                     proofOverride: proofOverride,
                     proofReason: proofReason,
+                    isZombie: isZombie,
+                    zombieReason: zombieReason,
                     dasDetails: dasResult ? dasResult.dasDetails : null,
                     mrsDetails: mrsResult ? mrsResult.mrsDetails : null,
                     rmvsDetails: rmvsResult ? rmvsResult.rmvsDetails : null
-                });
-            } catch (error) {
-                console.error(`Error processing ${name}:`, error.message);
-                if (error.response && error.response.status === 404) {
-                    results.push({ name: name, error: "package not found on pypi" });
-                } else {
-                    results.push({ name: name, error: error.message });
-                }
+                };
+            })(), 30000);
+
+            results.push(packageResult);
+            successCount++;
+            const elapsed = Date.now() - packageStartTime;
+            console.log(`   ✔️  ${name} done in ${elapsed}ms`);
+        } catch (error) {
+            failCount++;
+            const elapsed = Date.now() - packageStartTime;
+            console.error(`   ❌ ${name} failed in ${elapsed}ms: ${error.message}`);
+            if (error.message === 'Package audit timeout') {
+                results.push({ name: name, error: 'Timeout' });
+            } else if (error.response && error.response.status === 404) {
+                results.push({ name: name, error: "package not found on pypi" });
+            } else {
+                results.push({ name: name, error: error.message });
             }
         }
     }
+
+    const totalMs = Date.now() - auditStartTime;
+    console.log(`🏁 Audit complete: ${successCount} succeeded, ${failCount} failed in ${totalMs}ms`);
 
     res.json({ count: results.length, dependencies: results });
 }

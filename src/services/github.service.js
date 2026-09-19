@@ -1,4 +1,5 @@
-const axios = require('axios');
+// GitHub API service utilizing throttled githubClient and 5-minute memory caching
+const { githubClient } = require('../utils/clients');
 const { getCachedData, setCachedData } = require('../utils/cache');
 const { isNonTrivialCommit } = require('../utils/helpers');
 
@@ -19,7 +20,8 @@ async function fetchRepoCommitData(owner, repo, token, wbStartDate) {
     while (page <= maxPages) {
         try {
             const url = `https://api.github.com/repos/${owner}/${repo}/commits?since=${wbStartDate.toISOString()}&per_page=100&page=${page}`;
-            const res = await axios.get(url, { headers, timeout: 10000 });
+            // Call throttled GitHub client instead of direct axios.get
+            const res = await githubClient(url, { headers, timeout: 10000 });
             if (!Array.isArray(res.data) || res.data.length === 0) break;
             allCommits.push(...res.data);
             if (res.data.length < 100) break;
@@ -35,7 +37,8 @@ async function fetchRepoCommitData(owner, repo, token, wbStartDate) {
         latestCommitOverall = allCommits[0];
     } else {
         try {
-            const res = await axios.get(`https://api.github.com/repos/${owner}/${repo}/commits?per_page=5`, { headers, timeout: 10000 });
+            // Call throttled GitHub client for fallback check
+            const res = await githubClient(`https://api.github.com/repos/${owner}/${repo}/commits?per_page=5`, { headers, timeout: 10000 });
             if (Array.isArray(res.data) && res.data.length > 0) {
                 latestCommitOverall = res.data.find(isNonTrivialCommit) || res.data[0];
             }
@@ -64,7 +67,8 @@ async function fetchRepoPulls(owner, repo, token, weStart) {
     while (page <= maxPages) {
         try {
             const url = `https://api.github.com/repos/${owner}/${repo}/pulls?state=all&sort=created&direction=desc&per_page=100&page=${page}`;
-            const res = await axios.get(url, { headers, timeout: 10000 });
+            // Call throttled GitHub client for pull requests
+            const res = await githubClient(url, { headers, timeout: 10000 });
             if (!Array.isArray(res.data) || res.data.length === 0) break;
 
             let reachedOlder = false;
@@ -100,8 +104,8 @@ async function fetchRepoDataWithCache(owner, repo, token, wbStart, weStart) {
         ...(token ? { Authorization: `token ${token}` } : {})
     };
 
-    // 1. Fetch repo metadata
-    const ghResponse = await axios.get(`https://api.github.com/repos/${owner}/${repo}`, { headers, timeout: 10000 });
+    // 1. Fetch repo metadata via throttled GitHub client
+    const ghResponse = await githubClient(`https://api.github.com/repos/${owner}/${repo}`, { headers, timeout: 10000 });
     const repoData = ghResponse.data;
 
     // 2. Fetch commit history

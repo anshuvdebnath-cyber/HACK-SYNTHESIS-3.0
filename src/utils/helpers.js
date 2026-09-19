@@ -67,9 +67,30 @@ function isNonTrivialCommit(commitItem) {
     return true;
 }
 
+// Executes an HTTP call with retry and exponential backoff on 429, 502, and 503 errors
+async function fetchWithRetry(axiosCall, maxRetries = 3, serviceName = 'API') {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+            return await axiosCall();
+        } catch (err) {
+            const status = err.response?.status;
+            const isRetryable = status === 429 || status === 503 || status === 502;
+            if (isRetryable && attempt < maxRetries - 1) {
+                const waitMs = Math.pow(2, attempt) * 2000;
+                console.log(`⚠️  [${serviceName}] ${status} on attempt ${attempt + 1}. Retrying in ${waitMs}ms...`);
+                await new Promise(r => setTimeout(r, waitMs));
+                continue;
+            }
+            console.error(`❌ [${serviceName}] Failed after ${attempt + 1} attempts: ${err.message}`);
+            throw err;
+        }
+    }
+}
+
 module.exports = {
     getGithubUrl,
     parseGithubRepo,
     calculateMedian,
-    isNonTrivialCommit
+    isNonTrivialCommit,
+    fetchWithRetry
 };
