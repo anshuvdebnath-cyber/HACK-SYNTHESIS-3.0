@@ -1,5 +1,5 @@
-﻿import React from 'react';
-import { Share2, Play, Sparkles } from 'lucide-react';
+import React from 'react';
+import { Share2, Play, Loader2 } from 'lucide-react';
 import { SlideId } from '../types';
 
 interface TopNavProps {
@@ -96,7 +96,7 @@ export const TopNav: React.FC<TopNavProps> = ({
           >
             {isScanning ? (
               <>
-                <Sparkles className="w-4 h-4 animate-spin shrink-0" />
+                <Loader2 className="w-4 h-4 animate-spin shrink-0" />
                 <span className="hidden sm:inline">Auditing...</span>
               </>
             ) : (

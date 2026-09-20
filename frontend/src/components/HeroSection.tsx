@@ -11,7 +11,7 @@ import {
   ArrowRight, 
   Lock, 
   FileCode, 
-  Sparkles,
+  Loader2,
   Check,
   AlertTriangle
 } from 'lucide-react';
@@ -487,7 +487,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         >
           {isScanning ? (
             <>
-              <Sparkles className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin" />
               <span>Executing MALTA v1.0 Audit...</span>
             </>
           ) : (
