@@ -290,9 +290,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   <h3 className="text-sm sm:text-base font-bold text-slate-900 font-display leading-tight">
                     Requirements.txt &amp; Package Manifest
                   </h3>
-                  <span className="font-mono text-[10px] text-slate-500">
-                    METHOD: DIRECT MANIFEST
-                  </span>
+                  
                 </div>
               </div>
 
@@ -375,29 +373,8 @@ pymorphy2==0.9.1"
             </div>
           </div>
 
-          {/* Card 1 Footer */}
-          <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-1">
-              <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-mono text-[10px]">.txt</span>
-              <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-mono text-[10px]">.yml</span>
-              <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-mono text-[10px]">poetry</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setInput({
-                  ...input,
-                  mode: 'manifest',
-                  manifestFileName: 'requirements.txt',
-                  manifestContent: `numpy==1.19.5\nseaborn==0.13.2\npymorphy2==0.9.1\n`
-                });
-              }}
-              className="px-2 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-100 transition-colors cursor-pointer"
-            >
-              ⚡ Load 3 Packages
-            </button>
           </div>
-        </div>
+
         {/* Card 2: GitHub Repository Link */}
         <div 
           onClick={() => setMode('github')}
@@ -422,9 +399,7 @@ pymorphy2==0.9.1"
                   <h3 className="text-sm sm:text-base font-bold text-slate-900 font-display leading-tight">
                     GitHub Repository Link
                   </h3>
-                  <span className="font-mono text-[10px] text-slate-500">
-                    METHOD: REMOTE VCS
-                  </span>
+                  
                 </div>
               </div>
 
@@ -497,17 +472,7 @@ pymorphy2==0.9.1"
             </div>
           </div>
 
-          {/* Card 2 Footer */}
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500" onClick={(e) => e.stopPropagation()}>
-            <span className="flex items-center gap-1 text-[11px]">
-              <Lock className="w-3 h-3 text-blue-600" />
-              <span>Zero-sandbox leak guarantee</span>
-            </span>
-            <span className="font-mono text-[10px] text-blue-700 font-semibold bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
-              REMOTE VCS
-            </span>
           </div>
-        </div>
 
         {/* Card 3: LaTeX Research Manuscript (.tex) */}
         <div 
@@ -533,9 +498,7 @@ pymorphy2==0.9.1"
                   <h3 className="text-sm sm:text-base font-bold text-slate-900 font-display leading-tight">
                     LaTeX Research Manuscript (.tex)
                   </h3>
-                  <span className="font-mono text-[10px] text-slate-500">
-                    METHOD: LATEX ARTIFACT
-                  </span>
+                  
                 </div>
               </div>
 
@@ -616,30 +579,9 @@ pymorphy2==0.9.1"
             </div>
           </div>
 
-          {/* Card 3 Footer */}
-          <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-1">
-              <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-mono text-[10px]">.tex</span>
-              <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-mono text-[10px]">arXiv</span>
-              <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-mono text-[10px]">Overleaf</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setInput({
-                  ...input,
-                  mode: 'latex',
-                  latexFileName: 'sample.tex',
-                  latexContent: SAMPLE_LATEX_SOURCE
-                });
-              }}
-              className="px-2 py-1 rounded-lg bg-purple-50 border border-purple-200 text-[11px] font-semibold text-purple-800 hover:bg-purple-100 transition-colors cursor-pointer"
-            >
-              ⚡ Load Sample (.tex)
-            </button>
           </div>
-        </div>
       </div>
+
       {/* Primary CTA & Execution Estimation Strip */}
       <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-sm">
         <div className="flex items-center gap-3">
