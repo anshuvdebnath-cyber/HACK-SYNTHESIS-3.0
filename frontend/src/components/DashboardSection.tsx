@@ -829,61 +829,6 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({
         )}
       </div>
 
-      {/* 🧮 Pure Mathematical Expression & Dynamic Calculation Block */}
-      <div className="bg-slate-950 text-white rounded-3xl p-5 sm:p-6 shadow-xl border border-slate-800 font-mono">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-800 text-xs">
-          <div className="flex items-center gap-2">
-            <span className="text-base">🧮</span>
-            <span className="font-bold text-white uppercase tracking-wider">
-              Mathematical Master Expression
-            </span>
-          </div>
-          <span className="px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-700/50 text-[10px] font-bold">
-            0 ≤ Final Score ≤ 100
-          </span>
-        </div>
-
-        {/* The Equation */}
-        <div className="bg-slate-900/90 rounded-2xl p-4 border border-slate-800 text-center my-3">
-          <div className="text-xs text-slate-400 mb-1">
-            Exact Arithmetic:
-          </div>
-          <div className="text-sm sm:text-xl text-emerald-400 font-bold tracking-wide">
-            Final Score = 100 × (0.55 × DAS + 0.35 × MRS + 0.10 × RMVS)
-          </div>
-          <div className="mt-2 text-xs sm:text-sm text-slate-300 flex flex-wrap items-center justify-center gap-1.5 pt-1">
-            <span>= 100 × (</span>
-            <span className="text-emerald-300 font-bold">0.55 × {(das.score / 100).toFixed(2)}</span>
-            <span>+</span>
-            <span className="text-blue-300 font-bold">0.35 × {(mrs.score / 100).toFixed(2)}</span>
-            <span>+</span>
-            <span className="text-teal-300 font-bold">0.10 × {(rmvs.score / 100).toFixed(2)}</span>
-            <span>)</span>
-            <span className="text-slate-400 font-bold">=</span>
-            <span className="text-white font-extrabold text-sm sm:text-base bg-emerald-900/60 px-2 py-0.5 rounded border border-emerald-500">
-              {auditResult.finalScore} / 100
-            </span>
-          </div>
-        </div>
-
-        {/* 3 Arithmetic Contributions */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-          <div className="bg-slate-900/70 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
-            <span className="text-slate-400">DAS: 0.55 × {das.score}</span>
-            <span className="text-emerald-400 font-bold text-sm">+{dasPoints} / 55.0 pts</span>
-          </div>
-          <div className="bg-slate-900/70 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
-            <span className="text-slate-400">MRS: 0.35 × {mrs.score}</span>
-            <span className="text-blue-400 font-bold text-sm">+{mrsPoints} / 35.0 pts</span>
-          </div>
-          <div className="bg-slate-900/70 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
-            <span className="text-slate-400">RMVS: 0.10 × {rmvs.score}</span>
-            <span className="text-teal-400 font-bold text-sm">+{rmvsPoints} / 10.0 pts</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 🏛️ DAS, MRS & RMVS: PIE GRAPH AND NUMERICAL BOTH */}
       <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2">
@@ -1182,70 +1127,6 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({
                 <span className="font-bold text-slate-900">A_pen = {rmvs.aPen}</span>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 👻 Discordant Ghost Repos Diagnostic */}
-      <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-5 sm:p-6 shadow-xl border border-indigo-900/50">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 flex items-center justify-center">
-              <Ghost className="w-4 h-4 animate-pulse" />
-            </div>
-            <div>
-              <span className="text-[10px] font-mono font-bold text-indigo-300 uppercase">
-                Diagnostic Condition
-              </span>
-              <h3 className="text-base font-bold font-display text-white">
-                Discordant Detection (Ghost Repos)
-              </h3>
-            </div>
-          </div>
-
-          <div className="px-3 py-1 rounded-full bg-rose-950/80 border border-rose-700/60 text-rose-300 text-xs font-mono font-bold self-start sm:self-auto">
-            {auditResult.discordantDetection.discordantCount} Discordant Detected
-          </div>
-        </div>
-
-        {/* Diagnostic Mathematical Logic */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-          <div className="md:col-span-7 bg-slate-900/90 rounded-2xl p-4 border border-indigo-800/40 space-y-2 font-mono text-xs">
-            <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-emerald-400">
-              Condition 1: Version_Lag == LOW (Installed == Latest Release)
-            </div>
-            <div className="text-center font-bold text-indigo-400 text-xs py-0.5">
-              AND
-            </div>
-            <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-rose-400">
-              Condition 2: Maintenance_Lag &gt; 365 Days (Commits_365d == 0)
-            </div>
-            <div className="p-2.5 rounded-xl bg-indigo-900/40 border border-indigo-500/30 text-center font-display text-xs sm:text-sm font-semibold text-white">
-              &ldquo;Version says &lsquo;alive&rsquo;, but the repo says &lsquo;dead&rsquo;.&rdquo;
-            </div>
-          </div>
-
-          {/* Flagged Ghost Repos */}
-          <div className="md:col-span-5 space-y-2 font-mono">
-            {auditResult.discordantDetection.discordantPackages.map((ghost, idx) => (
-              <div 
-                key={idx} 
-                className="bg-rose-950/40 border border-rose-800/50 rounded-xl p-3 space-y-1"
-              >
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-white">{ghost.name}</span>
-                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-rose-900 text-rose-200">
-                    Lag: {ghost.maintenanceLagDays}d
-                  </span>
-                </div>
-                <div className="text-[11px] text-slate-300">
-                  Installed: <span className="text-emerald-400 font-semibold">{ghost.version}</span>
-                </div>
-                <div className="text-[10px] text-rose-200/90">
-                  {ghost.explanation}
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </div>
