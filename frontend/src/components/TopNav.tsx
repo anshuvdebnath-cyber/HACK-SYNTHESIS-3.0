@@ -16,7 +16,7 @@ export const TopNav: React.FC<TopNavProps> = ({
   isScanning = false,
 }) => {
   return (
-    <div className="fixed top-3.5 sm:top-5 left-0 right-0 z-50 px-3 sm:px-6 lg:px-8 pointer-events-none transition-all duration-200">
+    <div className="fixed top-3.5 sm:top-5 left-0 right-0 z-50 px-3 sm:px-6 lg:px-8 pointer-events-none transition-all duration-200 print:hidden">
       <nav
         aria-label="Unified Floating Navigation"
         className="max-w-7xl mx-auto pointer-events-auto bg-white/95 backdrop-blur-2xl border border-slate-300/90 shadow-[0_12px_44px_rgba(0,0,0,0.11)] rounded-2xl sm:rounded-full px-5 sm:px-8 py-3 sm:py-3.5 flex items-center justify-between gap-4 sm:gap-8 transition-all duration-200"

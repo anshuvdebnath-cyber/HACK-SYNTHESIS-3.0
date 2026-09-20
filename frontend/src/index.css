@@ -71,3 +71,72 @@ h1, h2, h3, .font-display {
 code, pre, .font-mono {
   font-family: 'JetBrains Mono', monospace;
 }
+
+/* ==========================================================================
+   ACADEMIC CERTIFICATE PRINT & PDF EXPORT STYLESHEET
+   Ensures zero header overlap, clean page breaks, and publication alignment
+   ========================================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 15mm 15mm 15mm;
+  }
+
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  html, body, #root {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Force hide all floating app chrome, docks, ambient light meshes, and toolbars */
+  nav,
+  header,
+  [aria-label="Unified Floating Navigation"],
+  [aria-label="Slide Switcher"],
+  .pointer-events-none,
+  .print\:hidden {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Main report container alignment */
+  main {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Page Break Rules: Keep cards, tables, and banners atomic */
+  .break-inside-avoid,
+  table,
+  tr,
+  tbody {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Prevent code snippet overflow and remove horizontal scrollbars */
+  pre, code {
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
+    overflow-x: visible !important;
+  }
+
+  /* Remove borders that look like web modals */
+  .print\:border-none {
+    border: none !important;
+  }
+}

@@ -20,7 +20,7 @@ export const SlideNavBar: React.FC<BottomDockProps> = ({
   const nextSlide = getNextSlide();
 
   return (
-    <nav aria-label="Slide Switcher" className="w-full py-2.5 sm:py-3 px-4 sm:px-8 flex items-center justify-center">
+    <nav aria-label="Slide Switcher" className="w-full py-2.5 sm:py-3 px-4 sm:px-8 flex items-center justify-center print:hidden">
       <div className="max-w-7xl mx-auto flex items-center justify-center">
         {/* Big 1, 2, 3 and Next Slide Switcher */}
         <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 bg-white/95 backdrop-blur-md border-2 border-slate-200/90 p-2 sm:p-2.5 rounded-2xl sm:rounded-full shadow-md hover:shadow-lg transition-all duration-200">

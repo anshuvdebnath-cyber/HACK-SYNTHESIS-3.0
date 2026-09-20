@@ -50,7 +50,7 @@ export const MaltaRemediationSection: React.FC<MaltaRemediationSectionProps> = (
   return (
     <div className={`rounded-3xl border ${
       variant === 'report' 
-        ? 'bg-slate-50/70 border-slate-200 p-6 my-8' 
+        ? 'bg-slate-50/70 border-slate-200 p-6 my-8 print:bg-white print:border-none print:p-0 print:my-4' 
         : 'bg-white border-slate-200 p-6 shadow-sm space-y-6 my-6'
     }`}>
       {/* Section Header */}
@@ -111,7 +111,7 @@ export const MaltaRemediationSection: React.FC<MaltaRemediationSectionProps> = (
           return (
             <div 
               key={sol.packageName}
-              className="p-5 rounded-2xl border border-slate-200/90 bg-white hover:border-slate-300 transition-all shadow-2xs space-y-3.5"
+              className="p-5 rounded-2xl border border-slate-200/90 bg-white hover:border-slate-300 transition-all shadow-2xs space-y-3.5 break-inside-avoid print:break-inside-avoid print:border-slate-300 print:shadow-none print:my-4 print:p-4"
             >
               {/* Card Header: Package Name + Lag Type Badge */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
@@ -193,12 +193,12 @@ export const MaltaRemediationSection: React.FC<MaltaRemediationSectionProps> = (
 
                 {/* Copyable Terminal Command */}
                 <div className="flex items-center justify-between bg-slate-900 text-emerald-400 rounded-lg p-2 font-mono text-xs shadow-xs">
-                  <span className="truncate pr-2 select-all">
+                  <span className="truncate pr-2 select-all print:whitespace-normal print:break-all print:text-[10px]">
                     $ {sol.primaryAction.command}
                   </span>
                   <button
                     onClick={() => copyToClipboard(cmdKey, sol.primaryAction.command)}
-                    className="shrink-0 flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white transition-colors cursor-pointer text-[10px]"
+                    className="shrink-0 flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white transition-colors cursor-pointer text-[10px] print:hidden"
                     title="Copy command"
                   >
                     {copiedKey === cmdKey ? (
@@ -234,7 +234,7 @@ export const MaltaRemediationSection: React.FC<MaltaRemediationSectionProps> = (
                   </p>
 
                   <div className="flex items-center justify-between bg-slate-900 text-indigo-300 rounded-lg p-2 font-mono text-[11px] shadow-xs">
-                    <pre className="truncate pr-2 overflow-x-auto select-all">
+                    <pre className="truncate pr-2 overflow-x-auto select-all print:whitespace-pre-wrap print:break-all print:text-[10px] print:overflow-visible">
                       {sol.preservationAction.snippet}
                     </pre>
                     <button

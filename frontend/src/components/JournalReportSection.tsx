@@ -69,9 +69,9 @@ export const JournalReportSection: React.FC<JournalReportSectionProps> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-16">
+    <div className="max-w-4xl mx-auto space-y-8 pb-16 print:space-y-6 print:pb-0 print:max-w-none print:w-full">
       {/* Top Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white/90 backdrop-blur-md p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white/90 backdrop-blur-md p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-xs print:hidden">
         <div className="flex items-center gap-3">
           <button
             onClick={onBackToDashboard}
@@ -108,7 +108,7 @@ export const JournalReportSection: React.FC<JournalReportSectionProps> = ({
       </div>
 
       {/* Main Journal Certificate Document Container */}
-      <div className="bg-white rounded-3xl border border-slate-300/80 p-8 sm:p-12 shadow-md relative overflow-hidden font-sans print:border-none print:shadow-none print:p-0">
+      <div className="bg-white rounded-3xl border border-slate-300/80 p-8 sm:p-12 shadow-md relative overflow-hidden font-sans print:border-none print:shadow-none print:p-0 print:overflow-visible">
         <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-800" />
 
         {/* Certificate Header */}
@@ -148,7 +148,7 @@ export const JournalReportSection: React.FC<JournalReportSectionProps> = ({
         </div>
 
         {/* Core Verification Banner */}
-        <div className="my-8 p-6 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50/50 to-blue-50 border border-emerald-200/80 flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div className="my-8 p-6 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50/50 to-blue-50 border border-emerald-200/80 flex flex-col sm:flex-row items-center justify-between gap-6 break-inside-avoid print:break-inside-avoid print:my-4 print:p-4">
           <div>
             <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-700 font-bold">
               MALTA MAINTENANCE LEVEL
@@ -174,7 +174,7 @@ export const JournalReportSection: React.FC<JournalReportSectionProps> = ({
         </div>
 
         {/* 3 Pillars Breakdown Table */}
-        <div className="space-y-3 mb-8">
+        <div className="space-y-3 mb-8 break-inside-avoid print:break-inside-avoid print:mb-4">
           <h3 className="text-sm font-bold font-display uppercase tracking-wider text-slate-800">
             Itemized 3 Pillars Evaluation
           </h3>
@@ -242,7 +242,7 @@ export const JournalReportSection: React.FC<JournalReportSectionProps> = ({
         </div>
 
         {/* Discordant Ghost Detection Summary */}
-        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono mb-8 flex items-start gap-3">
+        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono mb-8 flex items-start gap-3 break-inside-avoid print:break-inside-avoid print:mb-4">
           <Ghost className="w-5 h-5 text-indigo-600 mt-0.5 shrink-0" />
           <div>
             <div className="font-bold text-slate-900">Special Sauce: Discordant Detection</div>
@@ -257,7 +257,7 @@ export const JournalReportSection: React.FC<JournalReportSectionProps> = ({
         <MaltaRemediationSection auditResult={auditResult} variant="report" />
 
         {/* Bottom Sign-off */}
-        <div className="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 font-mono gap-3">
+        <div className="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 font-mono gap-3 break-inside-avoid print:break-inside-avoid print:pt-4">
           <div>Verified via MALTA Standard Evaluation Engine</div>
                     <div className="text-slate-400">Deterministic Code Replicability Specification</div>
         </div>

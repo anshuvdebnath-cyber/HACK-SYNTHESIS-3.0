@@ -46,7 +46,7 @@ export default function App() {
   return (
     <div className="min-h-screen relative flex flex-col justify-between overflow-x-hidden selection:bg-emerald-100 selection:text-emerald-900">
       {/* Ambient Light Mesh Background */}
-      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden print:hidden">
         <div className="absolute -top-32 left-1/4 w-96 h-96 bg-emerald-100/50 rounded-full blur-3xl opacity-70" />
         <div className="absolute top-1/3 -right-20 w-[30rem] h-[30rem] bg-blue-100/40 rounded-full blur-3xl opacity-60" />
         <div className="absolute -bottom-24 left-10 w-[26rem] h-[26rem] bg-purple-100/45 rounded-full blur-3xl opacity-50" />
@@ -72,7 +72,7 @@ export default function App() {
       
 
       {/* Main Slide Content Area */}
-      <main className="flex-1 max-w-7xl mx-auto px-4 md:px-8 pt-28 sm:pt-36 pb-16 w-full flex flex-col justify-center">
+      <main className="flex-1 max-w-7xl mx-auto px-4 md:px-8 pt-28 sm:pt-36 pb-16 w-full flex flex-col justify-center print:pt-0 print:pb-0 print:px-0 print:max-w-none">
         <AnimatePresence mode="wait">
           {currentSlide === 'hero' && (
             <motion.div
