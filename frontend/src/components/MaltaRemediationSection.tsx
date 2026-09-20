@@ -10,7 +10,8 @@ import {
   CheckCircle2, 
   Layers,
   ArrowUpRight,
-  Ghost
+  Ghost,
+  Sparkles
 } from 'lucide-react';
 import { MaltaAuditResult } from '../types';
 import { synthesizeRemediation, RemediationSolution } from '../utils/maltaPolicyEngine';
@@ -32,9 +33,15 @@ export const MaltaRemediationSection: React.FC<MaltaRemediationSectionProps> = (
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
-  const solutions: RemediationSolution[] = auditResult.dependencies.map(dep => 
-    synthesizeRemediation(dep)
+  const isLiveGemini = Boolean(
+    auditResult.remediationSolutions && 
+    Array.isArray(auditResult.remediationSolutions) && 
+    auditResult.remediationSolutions.length > 0
   );
+
+  const solutions: RemediationSolution[] = isLiveGemini
+    ? (auditResult.remediationSolutions as RemediationSolution[])
+    : auditResult.dependencies.map(dep => synthesizeRemediation(dep));
 
   const discordantCount = solutions.filter(s => s.lagType === 'DISCORDANT_GHOST').length;
   const terminalCount = solutions.filter(s => s.lagType === 'TERMINAL_ABANDONED').length;
@@ -50,10 +57,17 @@ export const MaltaRemediationSection: React.FC<MaltaRemediationSectionProps> = (
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-              <Zap className="w-3 h-3 text-emerald-600" />
-              PEER-REVIEWED REPRODUCIBILITY PROTOCOL
-            </span>
+            {isLiveGemini ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-indigo-50 text-indigo-800 border border-indigo-300 shadow-xs">
+                <Sparkles className="w-3 h-3 text-indigo-600 animate-pulse" />
+                REAL-TIME GEMINI AI REMEDIATION (ONLINE)
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
+                <Zap className="w-3 h-3 text-emerald-600" />
+                MALTA SCIENTIFIC POLICY SYNTHESIS (FALLBACK)
+              </span>
+            )}
             <span className="text-slate-300">•</span>
             <span className="text-xs font-mono text-slate-500">IEEE TSE / arXiv:2603.10265</span>
           </div>

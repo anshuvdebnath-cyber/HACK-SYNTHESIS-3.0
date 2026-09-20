@@ -20,4 +20,7 @@ router.post('/audit', auditController.auditRequirements);
 // POST /api/audit-latex - Audit GitHub repositories referenced in LaTeX manuscript (.tex)
 router.post('/audit-latex', upload.single('file'), auditController.auditLatex);
 
+// POST /api/remediation - Synthesize live AI-grounded remediation recommendations using MALTA principles
+router.post('/remediation', auditController.getLiveRemediation);
+
 module.exports = router;

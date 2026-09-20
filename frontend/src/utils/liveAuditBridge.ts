@@ -138,7 +138,26 @@ export async function runLiveMaltaAudit(input: AuditInput): Promise<MaltaAuditRe
   }
 
   if (backendDependencies.length > 0) {
-    return mapBackendToAuditResult(backendDependencies);
+    const auditResult = mapBackendToAuditResult(backendDependencies);
+
+    // Live Gemini Remediation Synthesis (Paper grounded: Panter & Eisty 2026)
+    try {
+      const remRes = await fetch('/api/remediation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dependencies: backendDependencies })
+      });
+      if (remRes.ok) {
+        const remData = await remRes.json();
+        if (remData.solutions && Array.isArray(remData.solutions) && remData.solutions.length > 0) {
+          auditResult.remediationSolutions = remData.solutions;
+        }
+      }
+    } catch (e) {
+      console.warn('Live Gemini remediation fetch skipped/failed (will use paper fallback):', e);
+    }
+
+    return auditResult;
   }
 
   throw new Error('No live data could be retrieved from the backend. Please check connection to port 3003.');

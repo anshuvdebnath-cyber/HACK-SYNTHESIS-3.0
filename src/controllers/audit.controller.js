@@ -1,3 +1,4 @@
+const { synthesizeLiveRemediation } = require('../services/geminiRemediation.service');
 // Audit controller orchestrating sequential, throttled dependency evaluation with MALTA scoring
 const { fetchPackageMetadata, fetchPypiDownloadStats } = require('../services/pypi.service');
 const { fetchRepoDataWithCache } = require('../services/github.service');
@@ -370,7 +371,32 @@ async function auditLatex(req, res) {
     });
 }
 
+
+/**
+ * Controller: Synthesizes live AI remediation recommendations for audited dependencies
+ */
+async function getLiveRemediation(req, res) {
+    try {
+        const { dependencies } = req.body;
+        if (!dependencies || !Array.isArray(dependencies)) {
+            return res.status(400).json({ error: "Invalid request. 'dependencies' array is required." });
+        }
+
+        console.log(`🤖 Synthesizing live MALTA remediation for ${dependencies.length} packages...`);
+        const solutions = await synthesizeLiveRemediation(dependencies);
+        return res.json({
+            success: true,
+            count: solutions ? solutions.length : 0,
+            solutions: solutions || []
+        });
+    } catch (err) {
+        console.error("Remediation controller error:", err.message);
+        return res.status(500).json({ error: "Remediation synthesis failed", details: err.message });
+    }
+}
+
 module.exports = {
+    getLiveRemediation,
     getTestPypi,
     auditRequirements,
     auditLatex
