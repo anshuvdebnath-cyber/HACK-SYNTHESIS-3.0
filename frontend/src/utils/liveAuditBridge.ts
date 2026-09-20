@@ -35,68 +35,116 @@ function extractRepoSlug(urlOrSlug: string): string | null {
 
 export async function runLiveMaltaAudit(input: AuditInput): Promise<MaltaAuditResult> {
   const backendDependencies: any[] = [];
-  const repoSlug = extractRepoSlug(input.repoUrl || '');
-  const manifest = (input.manifestContent || '').trim();
 
-  // 1. If a GitHub repository is provided (e.g. karpathy/nanoGPT or pasted GitHub URL)
-  if (repoSlug) {
+  // 1. LaTeX Manuscript Mode
+  if (input.mode === 'latex') {
     try {
       const boundary = '----WebKitFormBoundary' + Math.random().toString(36).substring(2);
-      const latexContent = `\\documentclass{article}\\begin{document}\\url{https://github.com/${repoSlug}}\\end{document}`;
-      const body = `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="repo.tex"\r\nContent-Type: application/x-tex\r\n\r\n${latexContent}\r\n--${boundary}--\r\n`;
+      const latexText = input.latexContent || '\\documentclass{article}\\begin{document}\\url{https://github.com/karpathy/nanoGPT}\\url{https://github.com/psf/requests}\\end{document}';
+      const body = `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${input.latexFileName || 'paper.tex'}"\r\nContent-Type: application/x-tex\r\n\r\n${latexText}\r\n--${boundary}--\r\n`;
 
-      const repoRes = await fetch('/api/audit-latex', {
+      const res = await fetch('/api/audit-latex', {
         method: 'POST',
-        headers: {
-          'Content-Type': `multipart/form-data; boundary=${boundary}`
-        },
+        headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` },
         body
       });
 
-      if (repoRes.ok) {
-        const repoData = await repoRes.json();
-        if (repoData.dependencies && repoData.dependencies.length > 0) {
-          backendDependencies.push(...repoData.dependencies);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.dependencies && data.dependencies.length > 0) {
+          backendDependencies.push(...data.dependencies);
         }
+      } else {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || 'Failed to extract GitHub repository URLs from LaTeX manuscript.');
       }
-    } catch (e) {
-      console.warn('Live audit-latex request failed for repo:', repoSlug, e);
+    } catch (e: any) {
+      console.warn('Live audit-latex failed:', e);
+      throw e;
     }
   }
 
-  // 2. If a manifest is provided (e.g. packages from preset or uploaded/pasted requirements.txt)
-  if (manifest.length > 0) {
-    const sanitized = sanitizeRequirements(manifest);
-    // Take top 4 packages to ensure rapid real-time response from backend
-    const pkgLines = sanitized.split('\n').filter(Boolean).slice(0, 4).join('\n');
+  // 2. GitHub Repository Mode
+  else if (input.mode === 'github') {
+    const repoSlug = extractRepoSlug(input.repoUrl || '');
+    if (repoSlug) {
+      try {
+        const boundary = '----WebKitFormBoundary' + Math.random().toString(36).substring(2);
+        const latexContent = `\\documentclass{article}\\begin{document}\\url{https://github.com/${repoSlug}}\\end{document}`;
+        const body = `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="repo.tex"\r\nContent-Type: application/x-tex\r\n\r\n${latexContent}\r\n--${boundary}--\r\n`;
 
-    try {
-      const auditRes = await fetch('/api/audit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requirements: pkgLines })
-      });
+        const repoRes = await fetch('/api/audit-latex', {
+          method: 'POST',
+          headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` },
+          body
+        });
 
-      if (auditRes.ok) {
-        const auditData = await auditRes.json();
-        if (auditData.dependencies && auditData.dependencies.length > 0) {
-          backendDependencies.push(...auditData.dependencies);
+        if (repoRes.ok) {
+          const repoData = await repoRes.json();
+          if (repoData.dependencies && repoData.dependencies.length > 0) {
+            backendDependencies.push(...repoData.dependencies);
+          }
         }
+      } catch (e) {
+        console.warn('GitHub live audit failed:', e);
       }
-    } catch (e) {
-      console.warn('Live audit requirements failed:', e);
+    }
+
+    // Also audit preset dependencies if attached
+    const manifest = (input.manifestContent || '').trim();
+    if (manifest.length > 0 && (!repoSlug || backendDependencies.length === 0)) {
+      const sanitized = sanitizeRequirements(manifest);
+      const pkgLines = sanitized.split('\n').filter(Boolean).slice(0, 4).join('\n');
+      try {
+        const auditRes = await fetch('/api/audit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ requirements: pkgLines })
+        });
+        if (auditRes.ok) {
+          const auditData = await auditRes.json();
+          if (auditData.dependencies && auditData.dependencies.length > 0) {
+            backendDependencies.push(...auditData.dependencies);
+          }
+        }
+      } catch (e) {
+        console.warn('Live audit requirements failed:', e);
+      }
     }
   }
 
-  // 3. Map real backend outputs into the rich frontend dashboard schema
+  // 3. Requirements.txt & Manifest Mode
+  else {
+    const manifest = (input.manifestContent || '').trim();
+    if (manifest.length > 0) {
+      const sanitized = sanitizeRequirements(manifest);
+      const pkgLines = sanitized.split('\n').filter(Boolean).slice(0, 5).join('\n');
+      try {
+        const auditRes = await fetch('/api/audit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ requirements: pkgLines })
+        });
+        if (auditRes.ok) {
+          const auditData = await auditRes.json();
+          if (auditData.dependencies && auditData.dependencies.length > 0) {
+            backendDependencies.push(...auditData.dependencies);
+          }
+        }
+      } catch (e) {
+        console.warn('Live audit requirements failed:', e);
+      }
+    }
+  }
+
   if (backendDependencies.length > 0) {
-    return mapBackendToAuditResult(backendDependencies, repoSlug);
+    return mapBackendToAuditResult(backendDependencies);
   }
 
-  throw new Error('Could not connect to live MALTA engine on port 3003. Please ensure backend is running.');
+  throw new Error('No live data could be retrieved from the backend. Please check connection to port 3003.');
 }
 
-function mapBackendToAuditResult(backendDeps: any[], repoSlug?: string | null): MaltaAuditResult {
+function mapBackendToAuditResult(backendDeps: any[]): MaltaAuditResult {
   const dependencies: DependencyNode[] = backendDeps.map((dep: any) => {
     const instVer = dep.currentVersion ? (dep.currentVersion.startsWith('v') ? dep.currentVersion : `v${dep.currentVersion}`) : 'v1.0.0';
     const latVer = dep.latestVersion ? (dep.latestVersion.startsWith('v') ? dep.latestVersion : `v${dep.latestVersion}`) : instVer;

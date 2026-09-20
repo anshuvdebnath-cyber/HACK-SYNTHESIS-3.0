@@ -1,6 +1,6 @@
 export type SlideId = 'hero' | 'dashboard' | 'report';
 
-export type InputMode = 'github' | 'manifest' | 'code';
+export type InputMode = 'manifest' | 'github' | 'latex' | 'code';
 
 export interface AuditInput {
   mode: InputMode;
