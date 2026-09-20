@@ -81,7 +81,7 @@ export const AboutSection: React.FC = () => {
       icon: <BookOpen className="w-5 h-5 text-emerald-600" />,
       details: [
         'Master Formula: Final Score = 100 × (0.55×DAS + 0.35×MRS + 0.10×RMVS). Bounded between 0 and 100.',
-        '1. DAS — Development Activity (55%): min(1, λ_e/λ_b) × e^(−t_last/180). Models commit velocity and the 180-day inactivity decay penalty.',
+        '1. DAS — Development Activity (55%): min(1, λ_e/λ_b) × e^(−τ_last/180). Models commit velocity and the 180-day inactivity decay penalty.',
         '2. MRS — Maintainer Responsiveness (35%): R_dec × (1 − D_dec) × (1 − P_stale). Multiplicative collapse ensures hanging issues or missing docs zero out responsiveness.',
         '3. RMVS — Metadata Viability (10%): A_pen × (0.25×Stars + 0.25×Forks + 0.25×Watchers + 0.25×License). Community engagement gated by the A_pen archive penalty.'
       ]
@@ -262,8 +262,8 @@ export const AboutSection: React.FC = () => {
                 <PillarWeightPie weight={55} color="#10b981" label="DAS Weight" />
               </div>
 
-              <div className="mt-2.5 p-3 bg-slate-900 text-emerald-300 rounded-xl font-mono text-xs text-center border border-slate-800 font-bold">
-                min(1, λe / λb) × e^(−t_last / 180)
+              <div className="mt-3 p-4 bg-slate-900 text-emerald-300 rounded-2xl font-mono text-sm sm:text-base text-center border border-slate-800 font-bold tracking-wide shadow-xs">
+                min(1, λe / λb) × e^(−τ_last / 180)
               </div>
 
               {/* Specific Formula Terms */}
@@ -275,31 +275,31 @@ export const AboutSection: React.FC = () => {
                   <div><strong className="text-emerald-800">min(1, λe/λb):</strong> Velocity ratio (recent vs historical, capped at 1.0)</div>
                   <div><strong className="text-emerald-800">λe:</strong> Recent velocity (past 90d release &amp; commit frequency)</div>
                   <div><strong className="text-emerald-800">λb:</strong> Baseline velocity (lifetime average commit rate)</div>
-                  <div><strong className="text-emerald-800">e^(−t_last/180):</strong> Decay multiplier (exponential inactivity penalty)</div>
-                  <div><strong className="text-emerald-800">t_last:</strong> Inactivity elapsed (days since last commit/release)</div>
+                  <div><strong className="text-emerald-800">e^(−τ_last/180):</strong> Decay multiplier (exponential inactivity penalty)</div>
+                  <div><strong className="text-emerald-800">τ_last:</strong> Inactivity elapsed (days since last commit/release)</div>
                   <div><strong className="text-emerald-800">180:</strong> Half-life constant (180d inactive = ~63% score drop)</div>
                 </div>
               </div>
 
               {/* Parameter Details */}
-              <div className="mt-4 space-y-3 text-xs text-slate-600">
+              <div className="mt-4 space-y-3 text-xs sm:text-sm text-slate-700">
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                  <div className="font-mono font-bold text-slate-900 flex items-center justify-between">
+                  <div className="font-mono font-bold text-sm text-slate-950 flex items-center justify-between">
                     <span>λe / λb (Velocity Ratio)</span>
                     <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">Bounded ≤ 1.0</span>
                   </div>
-                  <p className="text-slate-600 font-sans">
+                  <p className="text-slate-700 font-sans text-xs sm:text-sm leading-relaxed mt-1">
                     <strong>λe:</strong> Recent commit &amp; release rate over past 90 days. <br />
                     <strong>λb:</strong> Historical baseline commit velocity across project lifetime.
                   </p>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                  <div className="font-mono font-bold text-slate-900 flex items-center justify-between">
-                    <span>t_last (Inactivity Elapsed)</span>
+                  <div className="font-mono font-bold text-sm text-slate-950 flex items-center justify-between">
+                    <span>τ_last (Inactivity Elapsed)</span>
                     <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">In Days</span>
                   </div>
-                  <p className="text-slate-600 font-sans">
+                  <p className="text-slate-700 font-sans text-xs sm:text-sm leading-relaxed mt-1">
                     Number of consecutive calendar days since the most recent commit or tagged release.
                   </p>
                 </div>
@@ -310,8 +310,8 @@ export const AboutSection: React.FC = () => {
                     <TrendingDown className="w-4 h-4 text-amber-700 shrink-0" />
                     <span>The 180-Day Drop Rule</span>
                   </div>
-                  <p className="text-[11px] font-sans leading-relaxed">
-                    At <strong>t_last = 180 days</strong>, <code className="bg-white/80 px-1 py-0.5 rounded text-[10px]">e^(−180/180) = e^(−1) ≈ 0.368</code>. The score drops precipitously by <strong>~63%</strong>.
+                  <p className="text-xs sm:text-sm font-sans leading-relaxed mt-1">
+                    At <strong>τ_last = 180 days</strong>, <code className="bg-white/80 px-1 py-0.5 rounded text-[10px]">e^(−180/180) = e^(−1) ≈ 0.368</code>. The score drops precipitously by <strong>~63%</strong>.
                   </p>
                 </div>
               </div>
@@ -337,7 +337,7 @@ export const AboutSection: React.FC = () => {
                 <PillarWeightPie weight={35} color="#3b82f6" label="MRS Weight" />
               </div>
 
-              <div className="mt-2.5 p-3 bg-slate-900 text-blue-300 rounded-xl font-mono text-xs text-center border border-slate-800 font-bold">
+              <div className="mt-3 p-4 bg-slate-900 text-blue-300 rounded-2xl font-mono text-sm sm:text-base text-center border border-slate-800 font-bold tracking-wide shadow-xs">
                 R_dec × (1 − D_dec) × (1 − P_stale)
               </div>
 
@@ -357,30 +357,30 @@ export const AboutSection: React.FC = () => {
               </div>
 
               {/* Parameter Details */}
-              <div className="mt-4 space-y-3 text-xs text-slate-600">
+              <div className="mt-4 space-y-3 text-xs sm:text-sm text-slate-700">
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                  <div className="font-mono font-bold text-slate-900">
+                  <div className="font-mono font-bold text-sm text-slate-950">
                     R_dec (Responsiveness Factor)
                   </div>
-                  <p className="text-slate-600 font-sans">
+                  <p className="text-slate-700 font-sans text-xs sm:text-sm leading-relaxed mt-1">
                     Maintainer issue response cadence. Tracks whether maintainers still reply to bug reports within 14 days.
                   </p>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                  <div className="font-mono font-bold text-slate-900">
+                  <div className="font-mono font-bold text-sm text-slate-950">
                     D_dec (Documentation Decay)
                   </div>
-                  <p className="text-slate-600 font-sans">
+                  <p className="text-slate-700 font-sans text-xs sm:text-sm leading-relaxed mt-1">
                     Penalizes stale or broken documentation, missing install instructions, or outdated API guides.
                   </p>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                  <div className="font-mono font-bold text-slate-900">
+                  <div className="font-mono font-bold text-sm text-slate-950">
                     P_stale (Stale PR/Issue Ratio)
                   </div>
-                  <p className="text-slate-600 font-sans">
+                  <p className="text-slate-700 font-sans text-xs sm:text-sm leading-relaxed mt-1">
                     Fraction of community pull requests and issues left unmerged or unaddressed without resolution.
                   </p>
                 </div>
@@ -391,7 +391,7 @@ export const AboutSection: React.FC = () => {
                     <AlertTriangle className="w-4 h-4 text-rose-700 shrink-0" />
                     <span>Multiplicative Collapse Factor</span>
                   </div>
-                  <p className="text-[11px] font-sans leading-relaxed">
+                  <p className="text-xs sm:text-sm font-sans leading-relaxed mt-1">
                     Because terms are multiplied, if maintainers vanish, docs rot, or PRs hang, <strong>the entire MRS score collapses to zero</strong>.
                   </p>
                 </div>
@@ -418,7 +418,7 @@ export const AboutSection: React.FC = () => {
                 <PillarWeightPie weight={10} color="#14b8a6" label="RMVS Weight" />
               </div>
 
-              <div className="mt-2.5 p-3 bg-slate-900 text-teal-300 rounded-xl font-mono text-xs text-center border border-slate-800 font-bold leading-relaxed">
+              <div className="mt-3 p-4 bg-slate-900 text-teal-300 rounded-2xl font-mono text-sm sm:text-base text-center border border-slate-800 font-bold tracking-wide shadow-xs">
                 A_pen × (0.25·S + 0.25·F + 0.25·W + 0.25·L)
               </div>
 
@@ -437,21 +437,21 @@ export const AboutSection: React.FC = () => {
               </div>
 
               {/* Parameter Details */}
-              <div className="mt-4 space-y-3 text-xs text-slate-600">
+              <div className="mt-4 space-y-3 text-xs sm:text-sm text-slate-700">
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                  <div className="font-mono font-bold text-slate-900">
+                  <div className="font-mono font-bold text-sm text-slate-950">
                     Community Signals (S, F, W)
                   </div>
-                  <p className="text-slate-600 font-sans">
+                  <p className="text-slate-700 font-sans text-xs sm:text-sm leading-relaxed mt-1">
                     Log-normalized Stars (25%), Forks (25%), and Watchers (25%) reflecting community adoption and network resilience.
                   </p>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                  <div className="font-mono font-bold text-slate-900">
+                  <div className="font-mono font-bold text-sm text-slate-950">
                     License Compliance (L)
                   </div>
-                  <p className="text-slate-600 font-sans">
+                  <p className="text-slate-700 font-sans text-xs sm:text-sm leading-relaxed mt-1">
                     Binary check (25%) confirming presence of an OSI-approved open-source license (MIT, Apache-2.0, BSD, GPL).
                   </p>
                 </div>
@@ -462,7 +462,7 @@ export const AboutSection: React.FC = () => {
                     <Info className="w-4 h-4 text-slate-600 shrink-0" />
                     <span>A_pen (Activity Penalty Factor)</span>
                   </div>
-                  <p className="text-[11px] font-sans leading-relaxed">
+                  <p className="text-xs sm:text-sm font-sans leading-relaxed mt-1">
                     Set to <strong>1.0</strong> for active repositories. Drops immediately to <strong>0.0</strong> if the repository is archived, read-only, or dead — completely nullifying vanity metrics.
                   </p>
                 </div>
