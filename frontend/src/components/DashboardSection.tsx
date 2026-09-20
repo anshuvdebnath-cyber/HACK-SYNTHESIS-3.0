@@ -1,3 +1,4 @@
+import { MaltaRemediationSection } from './MaltaRemediationSection';
 import { MaltaScanningOverlay } from './MaltaScanningOverlay';
 import React, { useState } from 'react';
 import { 
@@ -1235,83 +1236,7 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({
         </div>
       </div>
 
-      {/* Remediation Fix Directives */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm font-mono">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-bold font-display text-slate-900">
-            Remediation Directives ({auditResult.issues.length})
-          </h3>
-          <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full">
-            Action Items
-          </span>
-        </div>
-
-        <div className="space-y-3 text-xs">
-          {auditResult.issues.map((issue) => (
-            <div 
-              key={issue.id}
-              className="p-3.5 rounded-2xl border border-slate-200/90 bg-slate-50/50 space-y-1.5"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
-                    issue.severity === 'critical'
-                      ? 'bg-rose-100 text-rose-800'
-                      : issue.severity === 'high'
-                      ? 'bg-amber-100 text-amber-800'
-                      : issue.severity === 'verified'
-                      ? 'bg-emerald-100 text-emerald-800'
-                      : 'bg-blue-100 text-blue-800'
-                  }`}>
-                    {issue.severity.toUpperCase()}
-                  </span>
-                  <span className="font-bold text-slate-800">
-                    {issue.title}
-                  </span>
-                </div>
-                {issue.formulaNote && (
-                  <span className="text-[10px] text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200">
-                    {issue.formulaNote}
-                  </span>
-                )}
-              </div>
-
-              <div className="text-slate-600 text-[11px]">
-                Impact: <span className="text-rose-700 font-semibold">{issue.impact}</span>
-              </div>
-
-              {issue.remediationCode && (
-                <div className="pt-2 border-t border-slate-200">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[9px] font-bold text-slate-500 uppercase">
-                      Suggested Fix
-                    </span>
-                    <button
-                      onClick={() => copyCode(issue.id, issue.remediationCode!)}
-                      className="inline-flex items-center gap-1 text-[10px] text-emerald-700 hover:text-emerald-800 font-bold cursor-pointer"
-                    >
-                      {copiedId === issue.id ? (
-                        <>
-                          <Check className="w-3 h-3" />
-                          <span>Copied</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3 h-3" />
-                          <span>Copy</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                  <pre className="p-2 rounded-xl bg-slate-900 text-emerald-300 text-[11px] overflow-x-auto">
-                    {issue.remediationCode}
-                  </pre>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
+      <MaltaRemediationSection auditResult={auditResult} variant="dashboard" />
     </div>
   );
 };

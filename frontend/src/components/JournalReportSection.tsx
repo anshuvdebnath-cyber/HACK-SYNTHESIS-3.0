@@ -1,3 +1,4 @@
+import { MaltaRemediationSection } from './MaltaRemediationSection';
 import React, { useState } from 'react';
 import { 
   FileCheck2, 
@@ -251,6 +252,9 @@ export const JournalReportSection: React.FC<JournalReportSectionProps> = ({
             </div>
           </div>
         </div>
+
+        {/* MALTA Scientific Remediation & Action Playbook */}
+        <MaltaRemediationSection auditResult={auditResult} variant="report" />
 
         {/* Bottom Sign-off */}
         <div className="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 font-mono gap-3">
