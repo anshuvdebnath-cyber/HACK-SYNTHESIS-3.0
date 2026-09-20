@@ -133,13 +133,6 @@ export const AboutSection: React.FC = () => {
       {/* Section Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-mono uppercase tracking-widest text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-              Architecture &amp; Specifications
-            </span>
-            <span className="text-slate-300">•</span>
-            <span className="text-xs font-mono text-slate-500">Slide 1 Master Reference</span>
-          </div>
           <h2 className="text-2xl sm:text-3xl font-bold font-display text-slate-900 mt-1.5">
             About The MALTA Score &amp; Parameter Architecture
           </h2>
@@ -236,10 +229,13 @@ export const AboutSection: React.FC = () => {
 
       {/* 2. The 3 Pillars Architecture & Detailed Parameter Specifications */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-bold font-display text-slate-900">
-            🏛️ 2. The 3 Pillars Architecture &amp; Parameter Details
-          </span>
+        <div>
+          <h3 className="text-2xl sm:text-3xl font-extrabold font-display text-slate-900 tracking-tight">
+            2. The 3 Pillars Architecture &amp; Parameter Details
+          </h3>
+          <p className="text-sm sm:text-base text-slate-600 mt-1 font-sans">
+            Formal mathematical equations, velocity variables, and decay penalty constants governing the MALTA framework.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
