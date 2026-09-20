@@ -34,6 +34,8 @@ import {
   Info,
   ChevronRight,
   ArrowRight,
+  ArrowLeft,
+  Radar,
   ExternalLink,
   Eye,
   RefreshCw
@@ -180,7 +182,8 @@ const MiniPillarPie: React.FC<MiniPillarPieProps> = ({ earned, max, color, rawSc
 };
 
 interface DashboardSectionProps {
-  auditResult: MaltaAuditResult;
+  auditResult: MaltaAuditResult | null;
+  auditError?: string | null;
   isScanning: boolean;
   onReAudit: () => void;
   onViewReport: () => void;
@@ -190,6 +193,7 @@ interface DashboardSectionProps {
 
 export const DashboardSection: React.FC<DashboardSectionProps> = ({
   auditResult,
+  auditError,
   isScanning,
   onReAudit,
   onViewReport,
@@ -199,11 +203,148 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({
   const [selectedFilter, setSelectedFilter] = useState<'ALL' | 'HEALTHY' | 'STALLED' | 'ARCHIVED' | 'GHOST' | 'UNPINNED'>('ALL');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedDepName, setSelectedDepName] = useState<string>(
-    auditResult.dependencies[0]?.name || 'numpy'
+    auditResult?.dependencies?.[0]?.name || ''
   );
   const [simulationMode, setSimulationMode] = useState<'EVALUATED' | 'SCREENSHOT_ERROR'>('EVALUATED');
   const [syncWithPillars, setSyncWithPillars] = useState<boolean>(true);
   const [viewingSpecimen, setViewingSpecimen] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (auditResult?.dependencies?.[0]?.name) {
+      setSelectedDepName(auditResult.dependencies[0].name);
+    }
+  }, [auditResult]);
+
+  // 1. Live Scanning Screen
+  if (isScanning && !auditResult) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16">
+        <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-slate-200 p-12 text-center space-y-6 shadow-sm">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 animate-pulse">
+            <Radar className="w-8 h-8 animate-spin" style={{ animationDuration: '4s' }} />
+          </div>
+          <div className="space-y-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+              MALTA v1.0 LIVE AUDIT IN PROGRESS
+            </span>
+            <h2 className="text-2xl font-bold font-display text-slate-900">
+              Calculating Real-Time Reproducibility Metrics
+            </h2>
+            <p className="text-sm text-slate-600 max-w-lg mx-auto leading-relaxed">
+              Querying GitHub API, parsing commit frequencies across 18-month and 24-month observation windows, measuring pull request latency, and computing DAS, MRS, and RMVS scores...
+            </p>
+          </div>
+          <div className="w-48 h-1.5 bg-slate-100 rounded-full mx-auto overflow-hidden">
+            <div className="h-full bg-emerald-500 rounded-full animate-pulse w-full" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Error State Screen
+  if (auditError && !auditResult) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16">
+        <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-rose-200 p-12 text-center space-y-6 shadow-sm">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600">
+            <AlertTriangle className="w-8 h-8" />
+          </div>
+          <div className="space-y-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-rose-100 text-rose-800 border border-rose-200">
+              AUDIT CALCULATION ERROR
+            </span>
+            <h2 className="text-2xl font-bold font-display text-slate-900">
+              Live Audit Execution Failed
+            </h2>
+            <p className="text-sm font-mono text-rose-700 max-w-lg mx-auto p-3 rounded-xl bg-rose-50/80 border border-rose-200">
+              {auditError}
+            </p>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              Please check your input to ensure valid GitHub repository URLs or package requirements are present.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <button
+              onClick={() => onSelectSlide?.('hero')}
+              className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs shadow-sm transition-all cursor-pointer flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Return to Ingestion Tab
+            </button>
+            <button
+              onClick={onReAudit}
+              className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-sm transition-all cursor-pointer flex items-center gap-2"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Retry Audit
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 3. Clean Awaiting Real-Time Audit State (Zero hardcoded data)
+  if (!auditResult) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16">
+        <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-slate-200 p-10 sm:p-14 text-center space-y-8 shadow-sm">
+          <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/80 flex items-center justify-center text-emerald-600 shadow-inner">
+            <Radar className="w-10 h-10" />
+          </div>
+
+          <div className="space-y-3 max-w-2xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
+              <span className="w-2 h-2 rounded-full bg-slate-400" />
+              NO HARDCODED DATA • REAL-TIME CALCULATION ONLY
+            </div>
+            <h2 className="text-3xl font-bold font-display text-slate-900 tracking-tight">
+              Live Reproducibility Dashboard
+            </h2>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              All MALTA indicators—Development Activity (DAS 55%), Maintainer Responsiveness (MRS 35%), and Metadata Viability (RMVS 10%)—are computed strictly on-demand in real time. Select an ingestion source and initiate an audit to calculate and publish live reproducibility data.
+            </p>
+          </div>
+
+          {/* 3 Pillars Preview Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto text-left">
+            <div className="p-5 rounded-2xl bg-slate-50/80 border border-slate-200">
+              <div className="text-xs font-mono font-bold text-emerald-700 mb-1">PILLAR 1: DAS (55%)</div>
+              <div className="text-sm font-bold text-slate-900 mb-1">Development Activity</div>
+              <div className="text-xs text-slate-500 font-mono">min(1, λe/λb) × e^(-t_last/180)</div>
+              <div className="text-xs text-slate-600 mt-2">Calculates commit velocity across 18-month evaluation and 24-month baseline windows.</div>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-slate-50/80 border border-slate-200">
+              <div className="text-xs font-mono font-bold text-blue-700 mb-1">PILLAR 2: MRS (35%)</div>
+              <div className="text-sm font-bold text-slate-900 mb-1">Maintainer Responsiveness</div>
+              <div className="text-xs text-slate-500 font-mono">R_dec × (1 - D_dec) × (1 - P_stale)</div>
+              <div className="text-xs text-slate-600 mt-2">Measures pull request resolution rate, closure latency, and stale PR backlog.</div>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-slate-50/80 border border-slate-200">
+              <div className="text-xs font-mono font-bold text-purple-700 mb-1">PILLAR 3: RMVS (10%)</div>
+              <div className="text-sm font-bold text-slate-900 mb-1">Metadata Viability</div>
+              <div className="text-xs text-slate-500 font-mono">A_pen × (0.25★ + 0.25⑂ + 0.25👁 + 0.25§)</div>
+              <div className="text-xs text-slate-600 mt-2">Evaluates community engagement, license validity, and archival status.</div>
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <button
+              onClick={() => onSelectSlide?.('hero')}
+              className="px-8 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-display font-semibold text-sm tracking-wide shadow-md hover:shadow-lg transition-all cursor-pointer inline-flex items-center gap-2"
+            >
+              <span>Go to Ingestion &amp; Start Audit</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const copyCode = (id: string, code: string) => {
     navigator.clipboard.writeText(code);

@@ -8,36 +8,42 @@ import { SlideNavBar } from './components/BottomDock';
 import { AboutSection } from './components/AboutSection';
 import { CiteModal } from './components/CiteModal';
 import { AuditInput, SlideId, MaltaAuditResult } from './types';
-import { PRESETS, INITIAL_AUDIT_RESULT } from './data/mockData';
+import { PRESETS } from './data/mockData';
 import { runLiveMaltaAudit } from './utils/liveAuditBridge';
 
 export default function App() {
   const [currentSlide, setCurrentSlide] = useState<SlideId>('hero');
   const [isCiteModalOpen, setIsCiteModalOpen] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
+  const [auditError, setAuditError] = useState<string | null>(null);
 
   const [input, setInput] = useState<AuditInput>({
-    mode: 'github',
-    repoUrl: PRESETS[0].name,
-    branch: PRESETS[0].branch,
-    manifestContent: PRESETS[0].sampleManifest,
+    mode: 'latex',
+    repoUrl: 'https://github.com/tatsu-lab/stanford_alpaca',
+    branch: 'main',
+    manifestContent: '',
     manifestFileName: 'requirements.txt',
-    codeContent: PRESETS[0].sampleCode,
-    presetId: PRESETS[0].id
+    codeContent: '',
+    latexContent: '',
+    latexFileName: 'paper.tex',
+    presetId: undefined
   });
 
-  const [auditResult, setAuditResult] = useState<MaltaAuditResult>(INITIAL_AUDIT_RESULT);
+  const [auditResult, setAuditResult] = useState<MaltaAuditResult | null>(null);
 
   const handleStartAudit = async () => {
+    setAuditError(null);
     setIsScanning(true);
     setCurrentSlide('dashboard');
 
     try {
-      console.log('🚀 Executing live backend MALTA audit for:', input);
+      console.log('🚀 Executing live real-time backend MALTA audit for:', input);
       const result = await runLiveMaltaAudit(input);
       setAuditResult(result);
-    } catch (err) {
+      setAuditError(null);
+    } catch (err: any) {
       console.error('Audit execution error:', err);
+      setAuditError(err.message || 'Audit failed. Please check connection to port 3003 or verify your input format.');
     } finally {
       setIsScanning(false);
     }
@@ -105,6 +111,7 @@ export default function App() {
             >
               <DashboardSection
                 auditResult={auditResult}
+                auditError={auditError}
                 isScanning={isScanning}
                 onReAudit={handleStartAudit}
                 onViewReport={() => setCurrentSlide('report')}

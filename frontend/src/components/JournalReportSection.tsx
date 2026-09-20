@@ -12,12 +12,14 @@ import {
   Hash, 
   Layers, 
   ArrowLeft,
+  ArrowRight,
+  FileText,
   Ghost
 } from 'lucide-react';
 import { MaltaAuditResult, SlideId } from '../types';
 
 interface JournalReportSectionProps {
-  auditResult: MaltaAuditResult;
+  auditResult: MaltaAuditResult | null;
   onBackToDashboard: () => void;
   onOpenCiteModal: () => void;
   currentSlide?: SlideId;
@@ -32,6 +34,31 @@ export const JournalReportSection: React.FC<JournalReportSectionProps> = ({
   onSelectSlide,
 }) => {
   const [copiedMd, setCopiedMd] = useState(false);
+
+  if (!auditResult) {
+    return (
+      <div className="max-w-4xl mx-auto py-20 text-center space-y-6">
+        <div className="w-16 h-16 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
+          <FileText className="w-8 h-8 text-slate-400" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold font-display text-slate-800">
+            Reproducibility Certificate Awaiting Live Audit
+          </h2>
+          <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+            Certificates are cryptographically generated exclusively from real-time live audit results. No synthetic or hardcoded certificates are displayed.
+          </p>
+        </div>
+        <button
+          onClick={() => onSelectSlide?.('hero')}
+          className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-sm transition-all cursor-pointer inline-flex items-center gap-2"
+        >
+          <span>Go to Ingestion &amp; Run Audit</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
+    );
+  }
 
   const markdownSummary = `# REPOVITALS MALTA HEALTH AUDIT CERTIFICATE
 **Methodology:** MALTA Standard Formula: Final Score = 100 × (0.55×DAS + 0.35×MRS + 0.10×RMVS)

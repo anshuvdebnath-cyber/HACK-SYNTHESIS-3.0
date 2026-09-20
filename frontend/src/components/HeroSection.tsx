@@ -565,7 +565,7 @@ pymorphy2==0.9.1"
               </div>
               <textarea
                 rows={4}
-                value={input.latexContent || SAMPLE_LATEX_SOURCE}
+                value={input.latexContent !== undefined ? input.latexContent : ''}
                 onChange={(e) => {
                   setInput({
                     ...input,
@@ -573,9 +573,58 @@ pymorphy2==0.9.1"
                     latexContent: e.target.value
                   });
                 }}
-                placeholder="\\documentclass{article}..."
+                placeholder={`\\documentclass{article}\n\\begin{document}\nOur code is available at \\url{https://github.com/owner/repo}\n\\end{document}`}
                 className="w-full text-xs font-mono p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white resize-none"
               />
+              {/* Quick-Load Real Published Research Papers */}
+              <div className="flex flex-wrap gap-2 pt-1.5">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setInput({
+                      ...input,
+                      mode: 'latex',
+                      latexFileName: 'real_mue-x.tex',
+                      latexContent: `\\documentclass[11pt]{article}
+\\usepackage{hyperref}
+\\title{MUE-X: A Self-Evolving AI Agent Through AST-Level Code Mutation}
+\\author{KORRO Research}
+\\begin{document}
+\\maketitle
+\\section{Code Availability}
+All code, evaluation scripts, and raw experimental data are available at \\url{https://github.com/KorroAi/mue-x}.
+Evaluated multi-agent baselines include AutoGPT (\\url{https://github.com/Significant-Gravitas/AutoGPT}) and Aider (\\url{https://github.com/Aider-AI/aider}).
+\\end{document}`
+                    });
+                  }}
+                  className="text-[10px] font-mono px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 cursor-pointer transition-colors shadow-2xs font-semibold"
+                >
+                  ⚡ Load Real MUE-X Research Paper
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setInput({
+                      ...input,
+                      mode: 'latex',
+                      latexFileName: 'real_minia.tex',
+                      latexContent: `\\documentclass{article}
+\\usepackage{hyperref}
+\\title{Minia: Metagenomics Assembly Pipeline}
+\\begin{document}
+\\section{Pipeline Repository}
+We recommend using the Minia-pipeline (\\url{https://github.com/GATB/gatb-minia-pipeline}) that runs Minia multiple times.
+Associated sub-modules: BCALM (\\url{https://github.com/GATB/bcalm}) and khmer (\\url{https://github.com/dib-lab/khmer}).
+\\end{document}`
+                    });
+                  }}
+                  className="text-[10px] font-mono px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 cursor-pointer transition-colors shadow-2xs font-semibold"
+                >
+                  🧬 Load Real Minia Paper
+                </button>
+              </div>
             </div>
           </div>
 

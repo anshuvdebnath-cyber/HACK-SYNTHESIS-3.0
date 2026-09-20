@@ -38,28 +38,34 @@ export async function runLiveMaltaAudit(input: AuditInput): Promise<MaltaAuditRe
 
   // 1. LaTeX Manuscript Mode
   if (input.mode === 'latex') {
+    const latexText = (input.latexContent || '').trim();
+    if (!latexText) {
+      throw new Error('LaTeX manuscript content is empty. Please paste your .tex code or drag-and-drop a .tex file.');
+    }
+
     try {
-      const boundary = '----WebKitFormBoundary' + Math.random().toString(36).substring(2);
-      const latexText = input.latexContent || '\\documentclass{article}\\begin{document}\\url{https://github.com/karpathy/nanoGPT}\\url{https://github.com/psf/requests}\\end{document}';
-      const body = `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${input.latexFileName || 'paper.tex'}"\r\nContent-Type: application/x-tex\r\n\r\n${latexText}\r\n--${boundary}--\r\n`;
+      const formData = new FormData();
+      const fileBlob = new Blob([latexText], { type: 'text/plain;charset=utf-8' });
+      formData.append('file', fileBlob, input.latexFileName || 'manuscript.tex');
 
       const res = await fetch('/api/audit-latex', {
         method: 'POST',
-        headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` },
-        body
+        body: formData
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.dependencies && data.dependencies.length > 0) {
-          backendDependencies.push(...data.dependencies);
-        }
-      } else {
+      if (!res.ok) {
         const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error || 'Failed to extract GitHub repository URLs from LaTeX manuscript.');
+        throw new Error(errJson.error || `Server responded with status ${res.status}: Failed to extract and audit LaTeX manuscript.`);
+      }
+
+      const data = await res.json();
+      if (data.dependencies && Array.isArray(data.dependencies) && data.dependencies.length > 0) {
+        backendDependencies.push(...data.dependencies);
+      } else {
+        throw new Error('No GitHub repository links were found in the uploaded LaTeX manuscript.');
       }
     } catch (e: any) {
-      console.warn('Live audit-latex failed:', e);
+      console.error('Live audit-latex failed:', e);
       throw e;
     }
   }
@@ -69,14 +75,13 @@ export async function runLiveMaltaAudit(input: AuditInput): Promise<MaltaAuditRe
     const repoSlug = extractRepoSlug(input.repoUrl || '');
     if (repoSlug) {
       try {
-        const boundary = '----WebKitFormBoundary' + Math.random().toString(36).substring(2);
+        const formData = new FormData();
         const latexContent = `\\documentclass{article}\\begin{document}\\url{https://github.com/${repoSlug}}\\end{document}`;
-        const body = `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="repo.tex"\r\nContent-Type: application/x-tex\r\n\r\n${latexContent}\r\n--${boundary}--\r\n`;
+        formData.append('file', new Blob([latexContent], { type: 'text/plain;charset=utf-8' }), 'repo.tex');
 
         const repoRes = await fetch('/api/audit-latex', {
           method: 'POST',
-          headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` },
-          body
+          body: formData
         });
 
         if (repoRes.ok) {
