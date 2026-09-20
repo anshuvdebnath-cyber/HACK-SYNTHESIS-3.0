@@ -134,11 +134,7 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      {/* Citation Modal */}
-      <CiteModal
-        isOpen={isCiteModalOpen}
-        onClose={() => setIsCiteModalOpen(false)}
-      />
+      
     </div>
   );
 }

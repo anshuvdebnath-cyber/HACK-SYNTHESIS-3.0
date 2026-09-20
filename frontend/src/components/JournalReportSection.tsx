@@ -259,12 +259,7 @@ export const JournalReportSection: React.FC<JournalReportSectionProps> = ({
         {/* Bottom Sign-off */}
         <div className="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 font-mono gap-3">
           <div>Verified via MALTA Standard Evaluation Engine</div>
-          <button
-            onClick={onOpenCiteModal}
-            className="text-emerald-700 font-bold hover:underline cursor-pointer"
-          >
-            Generate Academic BibTeX Citation →
-          </button>
+                    <div className="text-slate-400">Deterministic Code Replicability Specification</div>
         </div>
       </div>
     </div>

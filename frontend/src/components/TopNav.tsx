@@ -1,12 +1,11 @@
 import React from 'react';
-import { Share2, Play, Loader2 } from 'lucide-react';
+import { Play, Loader2 } from 'lucide-react';
 import { SlideId } from '../types';
 
 interface TopNavProps {
   currentSlide: SlideId;
   onSelectSlide: (slide: SlideId) => void;
   onRunAudit: () => void;
-  onOpenCiteModal: () => void;
   isScanning?: boolean;
 }
 
@@ -14,7 +13,6 @@ export const TopNav: React.FC<TopNavProps> = ({
   currentSlide,
   onSelectSlide,
   onRunAudit,
-  onOpenCiteModal,
   isScanning = false,
 }) => {
   return (
@@ -81,14 +79,6 @@ export const TopNav: React.FC<TopNavProps> = ({
 
         {/* Right: Actions Cluster */}
         <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-          <button
-            onClick={onOpenCiteModal}
-            className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300/90 bg-white hover:bg-slate-50 text-slate-800 text-xs sm:text-sm font-semibold transition-all active:scale-95 shadow-xs cursor-pointer"
-          >
-            <Share2 className="w-4 h-4 text-blue-600 shrink-0" />
-            <span>Cite Paper</span>
-          </button>
-
           <button
             onClick={onRunAudit}
             disabled={isScanning}
