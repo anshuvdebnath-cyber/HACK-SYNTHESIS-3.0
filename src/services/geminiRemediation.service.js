@@ -1,4 +1,4 @@
-﻿const axios = require('axios');
+const axios = require('axios');
 
 const MALTA_SYSTEM_PROMPT = `You are an expert software engineer and academic reproducibility auditor specializing in dependency health and the MALTA framework (Panter & Eisty, IEEE TSE / arXiv:2603.10265, 2026).
 
@@ -44,18 +44,25 @@ OUTPUT SCHEMA (JSON ARRAY of objects):
 ]
 `;
 
+const CANDIDATE_MODELS = [
+  'gemini-3-flash-preview',
+  'gemini-3.1-flash-lite-preview',
+  'gemini-3.6-flash',
+  'gemini-flash-latest'
+];
+
 async function synthesizeLiveRemediation(dependencies) {
   const apiKey = process.env.GEMINI_API_KEY;
 
-  if (!apiKey || apiKey.trim().length === 0) {
-    console.log('ℹ️  GEMINI_API_KEY not set in .env; using local MALTA heuristic fallback.');
+  if (!apiKey || apiKey.trim().length === 0 || apiKey.includes('your_gemini_api_key')) {
+    console.log('ℹ️  GEMINI_API_KEY not configured; using local MALTA heuristic fallback.');
     return null;
   }
 
   // Sanitize and condense payload to minimize token consumption
   const payload = dependencies.map(dep => ({
     name: dep.name,
-    installedVersion: dep.installedVersion || dep.version || 'latest',
+    installedVersion: dep.installedVersion || dep.version || dep.currentVersion || 'latest',
     latestVersion: dep.latestVersion || dep.version || 'latest',
     maltaScore: dep.maltaScore ?? dep.finalScore ?? 50,
     maintenanceLagDays: dep.maintenanceLagDays || 0,
@@ -63,12 +70,10 @@ async function synthesizeLiveRemediation(dependencies) {
     isDiscordant: Boolean(dep.isDiscordant),
     isZombie: Boolean(dep.isZombie),
     isArchived: Boolean(dep.rmvsDetails && dep.rmvsDetails.archived),
-    dasScore: dep.dasScore || 0,
-    mrsScore: dep.mrsScore || 0,
+    dasScore: dep.dasScore || (dep.dasDetails ? dep.dasDetails.devActivityScore : 0),
+    mrsScore: dep.mrsScore || (dep.mrsDetails ? dep.mrsDetails.maintRespScore : 0),
     repositoryUrl: dep.repositoryUrl || null
   }));
-
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
   const requestBody = {
     contents: [
@@ -84,26 +89,31 @@ async function synthesizeLiveRemediation(dependencies) {
     }
   };
 
-  try {
-    const startTime = Date.now();
-    const response = await axios.post(url, requestBody, {
-      headers: { 'Content-Type': 'application/json' },
-      timeout: 25000
-    });
+  // Try candidate models sequentially until one succeeds
+  for (const model of CANDIDATE_MODELS) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    try {
+      const startTime = Date.now();
+      const response = await axios.post(url, requestBody, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 20000
+      });
 
-    const elapsed = Date.now() - startTime;
-    const candidates = response.data?.candidates;
-    if (candidates && candidates.length > 0) {
-      const text = candidates[0].content.parts[0].text;
-      const parsed = JSON.parse(text);
-      console.log(`✨ Gemini AI live remediation generated for ${parsed.length} packages in ${elapsed}ms`);
-      return parsed;
+      const elapsed = Date.now() - startTime;
+      const candidates = response.data?.candidates;
+      if (candidates && candidates.length > 0) {
+        const text = candidates[0].content.parts[0].text;
+        const parsed = JSON.parse(text);
+        console.log(`✨ Gemini AI (${model}) live remediation generated for ${parsed.length} packages in ${elapsed}ms`);
+        return parsed;
+      }
+    } catch (err) {
+      console.warn(`⚠️ Gemini model ${model} failed (${err.response?.status || err.message}), attempting next model...`);
     }
-    return null;
-  } catch (err) {
-    console.warn(`⚠️ Gemini remediation call failed: ${err.message}`);
-    return null;
   }
+
+  console.warn('⚠️ All Gemini model attempts failed or timed out. Falling back to local MALTA heuristic.');
+  return null;
 }
 
 module.exports = {
