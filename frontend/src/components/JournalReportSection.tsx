@@ -109,11 +109,11 @@ export const JournalReportSection: React.FC<JournalReportSectionProps> = ({
 
       {/* Main Journal Certificate Document Container */}
       <div className="bg-white rounded-3xl border border-slate-300/80 p-8 sm:p-12 shadow-md relative overflow-hidden font-sans print:border-none print:shadow-none print:p-0 print:overflow-visible">
-        <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-800" />
+        <div className="h-2 w-full bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-800 rounded-full mb-6 print:mb-4 print:h-1.5" />
 
         {/* Certificate Header */}
         <div className="border-b border-slate-200 pb-8 text-center sm:text-left relative">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div className="flex items-center justify-between gap-4 mb-5 print:mb-4">
             <div className="flex items-center justify-center sm:justify-start gap-2.5">
               <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
                 <FileCheck2 className="w-6 h-6" />
@@ -128,7 +128,7 @@ export const JournalReportSection: React.FC<JournalReportSectionProps> = ({
               </div>
             </div>
 
-            <div className="text-center sm:text-right text-xs font-mono text-slate-400 space-y-0.5">
+            <div className="text-right text-xs font-mono text-slate-500 space-y-1">
               <div>DOC REF: <span className="font-bold text-slate-700">{auditResult.hash.substring(7, 19).toUpperCase()}</span></div>
               <div>AUDIT DATE: <span className="text-slate-700">{new Date(auditResult.timestamp).toLocaleDateString()}</span></div>
             </div>
@@ -148,7 +148,7 @@ export const JournalReportSection: React.FC<JournalReportSectionProps> = ({
         </div>
 
         {/* Core Verification Banner */}
-        <div className="my-8 p-6 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50/50 to-blue-50 border border-emerald-200/80 flex flex-col sm:flex-row items-center justify-between gap-6 break-inside-avoid print:break-inside-avoid print:my-4 print:p-4">
+        <div className="my-8 p-6 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50/50 to-blue-50 border border-emerald-200/80 flex flex-col sm:flex-row items-center justify-between gap-6 break-inside-avoid print:break-inside-avoid print:my-5 print:p-5">
           <div>
             <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-700 font-bold">
               MALTA MAINTENANCE LEVEL
@@ -254,12 +254,15 @@ export const JournalReportSection: React.FC<JournalReportSectionProps> = ({
         </div>
 
         {/* MALTA Scientific Remediation & Action Playbook */}
-        <MaltaRemediationSection auditResult={auditResult} variant="report" />
+                {/* Bottom Sign-off Stamp for Certificate */}
+        <div className="pt-5 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 font-mono gap-3 break-inside-avoid print:break-inside-avoid print:pt-4">
+          <div>Verified via MALTA Standard Evaluation Engine (Panter & Eisty, 2026)</div>
+          <div className="text-slate-500 font-semibold">Deterministic Code Replicability Specification</div>
+        </div>
 
-        {/* Bottom Sign-off */}
-        <div className="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 font-mono gap-3 break-inside-avoid print:break-inside-avoid print:pt-4">
-          <div>Verified via MALTA Standard Evaluation Engine</div>
-                    <div className="text-slate-400">Deterministic Code Replicability Specification</div>
+        {/* MALTA Scientific Remediation & Action Playbook (Starts cleanly on Page 2 in Print) */}
+        <div className="print:break-before-page pt-6 print:pt-0">
+          <MaltaRemediationSection auditResult={auditResult} variant="report" />
         </div>
       </div>
     </div>

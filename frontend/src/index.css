@@ -120,6 +120,11 @@ code, pre, .font-mono {
   }
 
   /* Page Break Rules: Keep cards, tables, and banners atomic */
+  .print\:break-before-page {
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
   .break-inside-avoid,
   table,
   tr,
