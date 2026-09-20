@@ -158,21 +158,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             RepoVitals detects ghost repositories, silent build decay, and unseeded dependency drift before they compromise peer-reviewed reproducibility.
           </p>
 
-          <div className="pt-2 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-mono text-slate-500">
-            <span className="flex items-center gap-1.5 bg-white/70 px-2.5 py-1 rounded-md border border-slate-200/70 shadow-2xs">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Deterministic Replay</span>
-            </span>
-            <span className="flex items-center gap-1.5 bg-white/70 px-2.5 py-1 rounded-md border border-slate-200/70 shadow-2xs">
-              <Network className="w-3.5 h-3.5 text-purple-600" />
-              <span>Transitive Ghost Graphs</span>
-            </span>
-            <span className="flex items-center gap-1.5 bg-white/70 px-2.5 py-1 rounded-md border border-slate-200/70 shadow-2xs">
-              <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-              <span>Nature Protocols Compatible</span>
-            </span>
           </div>
-        </div>
 
         {/* Right Column: Stylized 3D Dependency Ghost Visual (5 Cols) */}
         <div className="lg:col-span-5 relative flex items-center justify-center min-h-[300px] py-4">
@@ -226,14 +212,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200/90 p-5 mb-6 shadow-2xs">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                <Radar className="w-3 h-3 text-emerald-600" />
-                AUDIT DATA INGESTION PIPELINE
-              </span>
-              <span className="text-slate-300">•</span>
-              <span className="text-xs font-mono text-slate-500 font-medium">Select 1 of 3 Ingestion Methods</span>
-            </div>
             <h2 className="text-xl sm:text-2xl font-display font-bold text-slate-900 tracking-tight">
               Input Methodology Section
             </h2>
