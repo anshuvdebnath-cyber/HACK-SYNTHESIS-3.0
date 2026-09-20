@@ -32,3 +32,36 @@ Content-Type: application/json
 {
   "requirements": "requests==2.32.3\npip==25.1.1\npymongo==4.12.1\nflask==3.0.0\nseaborn==0.13.2"
 }
+
+### 6. Live AI Remediation Synthesis (MALTA Principles Grounded)
+POST http://localhost:3003/api/remediation
+Content-Type: application/json
+
+{
+  "dependencies": [
+    {
+      "name": "pymorphy2",
+      "installedVersion": "0.9.1",
+      "latestVersion": "0.9.1",
+      "finalScore": 24,
+      "maintenanceLagDays": 2100,
+      "versionLagDays": 0,
+      "isDiscordant": true,
+      "isZombie": false,
+      "dasScore": 5,
+      "mrsScore": 12
+    },
+    {
+      "name": "requests",
+      "installedVersion": "2.25.1",
+      "latestVersion": "2.32.3",
+      "finalScore": 92,
+      "maintenanceLagDays": 14,
+      "versionLagDays": 420,
+      "isDiscordant": false,
+      "isZombie": false,
+      "dasScore": 88,
+      "mrsScore": 95
+    }
+  ]
+}
