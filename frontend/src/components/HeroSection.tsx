@@ -235,7 +235,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               <span className="text-xs font-mono text-slate-500 font-medium">Select 1 of 3 Ingestion Methods</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-display font-bold text-slate-900 tracking-tight">
-              Input Methodology
+              Input Methodology Section
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
               Choose your primary source to extract dependencies, parse manifest specifications, and compute live MALTA scores.
