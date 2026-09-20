@@ -183,46 +183,23 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         </div>
       </div>
 
-      {/* Input Mode Selector Sub-header */}
+      {/* Input Methodology Sub-header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-mono uppercase tracking-wider text-slate-500 font-semibold">
-            Input Methodology:
+          <span className="text-xs font-mono uppercase tracking-wider text-slate-500 font-bold">
+            Input Methodology: Direct Manifest Spec or Remote VCS Repository
           </span>
-          <div className="inline-flex rounded-lg bg-slate-100 p-0.5 border border-slate-200">
-            <button
-              onClick={() => setActiveTab('remote_direct')}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
-                activeTab === 'remote_direct'
-                  ? 'bg-white text-slate-900 shadow-xs font-semibold'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Repository Link &amp; Manifest Spec
-            </button>
-            <button
-              onClick={() => setActiveTab('code_inspect')}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${
-                activeTab === 'code_inspect'
-                  ? 'bg-white text-slate-900 shadow-xs font-semibold'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Code2 className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Direct Code Inspector</span>
-            </button>
-          </div>
         </div>
 
         {input.presetId && (
-          <span className="text-xs font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 hidden sm:inline-block">
+          <span className="text-xs font-mono text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 hidden sm:inline-block">
             Loaded: {input.presetId}
           </span>
         )}
       </div>
 
-      {/* Input Section (Dual-Action Cards Side-by-Side Bento or Direct Code Inspector) */}
-      {activeTab === 'remote_direct' ? (
+      {/* Input Section (Dual-Action Cards Side-by-Side) */}
+      
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Card A: Upload Manifest Spec */}
           <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200/90 p-6 flex flex-col justify-between hover:shadow-md transition-all duration-200 group">
@@ -412,55 +389,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             </div>
           </div>
         </div>
-      ) : (
-        /* Direct Code Inspector Tab */
-        <div className="bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/90 p-6 mb-6 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <Code2 className="w-4 h-4 text-emerald-600" />
-                <h3 className="text-base font-bold text-slate-900 font-display">Direct Code &amp; Script Inspection</h3>
-                <span className="font-mono text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-medium border border-emerald-200">
-                  MALTA v1.0 PRNG &amp; AST HEURISTIC
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 mt-0.5">
-                Paste Python / PyTorch / CUDA training scripts to directly audit random seed determinism, unseeded gaussian sampling, and float precision.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setInput({ ...input, mode: 'code', codeContent: PRESETS[0].sampleCode })}
-                className="px-2.5 py-1 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-mono font-medium transition-colors"
-              >
-                + Seeded Deterministic Loop
-              </button>
-              <button
-                type="button"
-                onClick={() => setInput({ ...input, mode: 'code', codeContent: PRESETS[1].sampleCode })}
-                className="px-2.5 py-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-800 text-xs font-mono font-medium transition-colors"
-              >
-                + Unseeded Stochastic Loop
-              </button>
-            </div>
-          </div>
-
-          <div className="relative">
-            <textarea
-              value={input.codeContent}
-              onChange={(e) => setInput({ ...input, mode: 'code', codeContent: e.target.value })}
-              rows={8}
-              placeholder="# Paste Python script here (e.g. torch training loop, seed definitions, model init)..."
-              className="w-full p-4 rounded-xl bg-slate-900 text-emerald-400 font-mono text-xs leading-relaxed border border-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-            />
-            <div className="absolute top-3 right-3 text-[10px] font-mono text-slate-500 bg-slate-800/80 px-2 py-0.5 rounded">
-              Python 3.10+ / PyTorch AST
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Primary CTA & Execution Estimation Strip */}
       <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/90 shadow-sm">
