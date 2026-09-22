@@ -1,7 +1,7 @@
 const { synthesizeLiveRemediation } = require('../services/geminiRemediation.service');
 // Audit controller orchestrating sequential, throttled dependency evaluation with MALTA scoring
 const { fetchPackageMetadata, fetchPypiDownloadStats } = require('../services/pypi.service');
-const { fetchRepoDataWithCache } = require('../services/github.service');
+const { fetchRepoDataWithCache, fetchRepoRequirements } = require('../services/github.service');
 const {
     calculateMALTA_DAS,
     calculateMALTA_MRS,
@@ -10,6 +10,8 @@ const {
 } = require('../services/malta.service');
 const { getGithubUrl, parseGithubRepo } = require('../utils/helpers');
 const { extractGithubUrlsFromLatex } = require('../services/latex.service');
+const { fetchVulnerabilitiesFromOSV } = require('../services/osv.service');
+const { generateAiExplanation } = require('../services/aiExplanation.service');
 
 // Per-package timeout helper preventing long-hanging audits
 const withTimeout = (promise, ms) =>
@@ -51,14 +53,20 @@ async function auditRequirements(req, res) {
     const lines = requirements.split('\n');
     const parsedPackages = [];
 
-    // Parse non-empty, non-comment lines
+    // Robust requirement line parser supporting ==, >=, <=, ~=, >, <, ;, and comments
     for (const line of lines) {
         const trimmed = line.trim();
-        if (trimmed && !trimmed.startsWith('#')) {
-            const [rawName, rawVersion] = trimmed.split('==');
+        if (!trimmed || trimmed.startsWith('#')) continue;
+
+        // Strip inline comments (#) and environment markers (;)
+        const clean = trimmed.split('#')[0].split(';')[0].trim();
+        if (!clean) continue;
+
+        const match = clean.match(/^([a-zA-Z0-9_\-\.]+)\s*(?:(==|>=|<=|~=|>|<|!=)\s*([0-9a-zA-Z\.\-_]+))?/);
+        if (match) {
             parsedPackages.push({
-                name: rawName.trim(),
-                version: rawVersion ? rawVersion.trim() : null
+                name: match[1].trim(),
+                version: match[3] ? match[3].trim() : null
             });
         }
     }
@@ -94,7 +102,7 @@ async function auditRequirements(req, res) {
                 let rmvsResult = null;
                 let finalResult = null;
 
-                const githubUrl = getGithubUrl(response);
+                const githubUrl = await getGithubUrl(response);
                 const repoInfo = parseGithubRepo(githubUrl);
 
                 if (repoInfo) {
@@ -198,7 +206,83 @@ async function auditRequirements(req, res) {
                     finalResult.finalScore < 40
                 );
 
+                // ═══════════════════════════════════════════════════════════
+                // FEATURE 1: DEPRECATION DETECTION (zero new API calls)
+                // ═══════════════════════════════════════════════════════════
+                const classifiers = response.info?.classifiers || [];
+                const isDeprecated = classifiers.some(c => c.includes("Development Status :: 7 - Inactive"));
+                const isMature = classifiers.some(c => c.includes("Development Status :: 6 - Mature"));
+                const deprecationNotice = isDeprecated ? "Officially marked as Inactive on PyPI" : null;
+
+                let actionHint = null;
+                let finalRiskLevel = finalResult ? finalResult.riskLevel : "Unknown (No Repository)";
+
+                if (isDeprecated) {
+                    finalRiskLevel = "Deprecated";
+                    actionHint = "Find a maintained alternative.";
+                }
+
+                // ═══════════════════════════════════════════════════════════
+                // FEATURE 2: LICENSE CHECK (zero new API calls)
+                // ═══════════════════════════════════════════════════════════
+                const licenseRaw = response.info?.license || response.info?.license_expression || null;
+                const hasLicense = Boolean(licenseRaw && typeof licenseRaw === 'string' && licenseRaw.trim().length > 0);
+                const licenseType = hasLicense ? licenseRaw.trim() : null;
+                const licenseRisk = !hasLicense;
+                const licenseNote = licenseRisk ? "No license specified. Legal reuse may be restricted." : null;
+
+                // ═══════════════════════════════════════════════════════════
+                // FEATURE 3: BREAKING CHANGE WARNING (zero new API calls)
+                // ═══════════════════════════════════════════════════════════
+                const breakingChangeRisk = (versionLag !== null && versionLag >= 2) 
+                    ? "HIGH" 
+                    : (versionLag === 1 ? "MODERATE" : "LOW");
+                const breakingChangeWarning = (versionLag !== null && versionLag >= 2)
+                    ? `${versionLag} major version jump. Breaking changes likely. Test before upgrading.`
+                    : (versionLag === 1 ? "1 major version jump. Test before upgrading." : null);
+
+                // ═══════════════════════════════════════════════════════════
+                // FEATURE 4: CVE DETECTION via OSV.dev
+                // ═══════════════════════════════════════════════════════════
+                const osvResult = await fetchVulnerabilitiesFromOSV(name, version);
+                const hasVulnerabilities = osvResult.hasVulnerabilities;
+                const vulnerabilityCount = osvResult.vulnerabilityCount;
+                const vulnerabilities = osvResult.vulnerabilities;
+
+                if (hasVulnerabilities) {
+                    actionHint = actionHint 
+                        ? `${actionHint} Security vulnerabilities detected. Upgrade or patch.`
+                        : "Security vulnerabilities detected. Upgrade or patch.";
+                }
+
+                // ═══════════════════════════════════════════════════════════
+                // FEATURE 5: GEMINI EXPLANATION LAYER (phrasing only)
+                // ═══════════════════════════════════════════════════════════
+                const packageData = {
+                    name: name,
+                    currentVersion: version ? version : 'unknown',
+                    latestVersion: response.info?.version || null,
+                    versionLag: versionLag,
+                    timeLagDays: timeLagDays,
+                    maintenanceLagDays: maintenanceLagDays,
+                    devActivityScore: dasResult ? dasResult.devActivityScore : null,
+                    maintRespScore: mrsResult ? mrsResult.maintRespScore : null,
+                    metadataScore: rmvsResult ? rmvsResult.metadataScore : null,
+                    finalScore: finalResult ? finalResult.finalScore : null,
+                    riskLevel: finalRiskLevel,
+                    isDeprecated: isDeprecated,
+                    hasLicense: hasLicense,
+                    licenseType: licenseType,
+                    hasVulnerabilities: hasVulnerabilities,
+                    vulnerabilityCount: vulnerabilityCount,
+                    isDiscordant: isDiscordant,
+                    proofOverride: proofOverride
+                };
+
+                const aiExplanation = await generateAiExplanation(packageData, actionHint);
+
                 return {
+                    // Existing fields preserved completely
                     name: name,
                     currentVersion: version ? version : 'unknown',
                     latestVersion: response.info.version,
@@ -210,7 +294,7 @@ async function auditRequirements(req, res) {
                     mrsDefined: mrsResult ? mrsResult.mrsDefined : false,
                     metadataScore: rmvsResult ? rmvsResult.metadataScore : null,
                     finalScore: finalResult ? finalResult.finalScore : null,
-                    riskLevel: finalResult ? finalResult.riskLevel : "Unknown (No Repository)",
+                    riskLevel: finalRiskLevel,
                     isDiscordant: isDiscordant,
                     proofOverride: proofOverride,
                     proofReason: proofReason,
@@ -218,7 +302,31 @@ async function auditRequirements(req, res) {
                     zombieReason: zombieReason,
                     dasDetails: dasResult ? dasResult.dasDetails : null,
                     mrsDetails: mrsResult ? mrsResult.mrsDetails : null,
-                    rmvsDetails: rmvsResult ? rmvsResult.rmvsDetails : null
+                    rmvsDetails: rmvsResult ? rmvsResult.rmvsDetails : null,
+
+                    // Feature 1: Deprecation Detection
+                    isDeprecated: isDeprecated,
+                    isMature: isMature,
+                    deprecationNotice: deprecationNotice,
+
+                    // Feature 2: License Check
+                    hasLicense: hasLicense,
+                    licenseType: licenseType,
+                    licenseRisk: licenseRisk,
+                    licenseNote: licenseNote,
+
+                    // Feature 3: Breaking Change Warning
+                    breakingChangeRisk: breakingChangeRisk,
+                    breakingChangeWarning: breakingChangeWarning,
+
+                    // Feature 4: CVE Detection via OSV.dev
+                    hasVulnerabilities: hasVulnerabilities,
+                    vulnerabilityCount: vulnerabilityCount,
+                    vulnerabilities: vulnerabilities,
+
+                    // Feature 5: AI Explanation Layer
+                    actionHint: actionHint,
+                    aiExplanation: aiExplanation
                 };
             })(), 30000);
 
@@ -395,7 +503,57 @@ async function getLiveRemediation(req, res) {
     }
 }
 
+
+/**
+ * POST /api/audit-repo or /api/audit-github-repo
+ * Directly audits a public GitHub repository by fetching its requirements.txt (or environment.yml)
+ * and running dependencies through the complete MALTA + 5 Features pipeline.
+ */
+async function auditGithubRepo(req, res) {
+    const { repoUrl, branch } = req.body;
+    if (!repoUrl) {
+        return res.status(400).json({ error: "Please provide a valid GitHub repository URL." });
+    }
+
+    const repoInfo = parseGithubRepo(repoUrl);
+    if (!repoInfo) {
+        return res.status(400).json({ error: "Invalid GitHub repository URL. Expected format: https://github.com/owner/repo or owner/repo" });
+    }
+
+    const { owner, repo } = repoInfo;
+    const token = process.env.GITHUB_TOKEN;
+
+    console.log('\n======================================================');
+    console.log(`🌐 [auditGithubRepo] Auditing Repository: ${owner}/${repo} (branch: ${branch || 'default'})`);
+    console.log('======================================================');
+
+    try {
+        const reqResult = await fetchRepoRequirements(owner, repo, token, branch);
+
+        if (!reqResult || !reqResult.content || !reqResult.content.trim()) {
+            console.log(`⚠️  [auditGithubRepo] No requirements.txt found in ${owner}/${repo}`);
+            return res.status(200).json({
+                repo: `${owner}/${repo}`,
+                hasRequirements: false,
+                message: `No requirements.txt or environment.yml found in repository ${owner}/${repo}.`,
+                count: 0,
+                dependencies: []
+            });
+        }
+
+        console.log(`📦 [auditGithubRepo] Successfully fetched ${reqResult.filename} (${reqResult.content.length} bytes) from ${owner}/${repo}`);
+
+        // Forward to the dependency audit pipeline
+        req.body.requirements = reqResult.content;
+        return auditRequirements(req, res);
+    } catch (err) {
+        console.error(`❌ [auditGithubRepo] Failed for ${owner}/${repo}:`, err.message);
+        return res.status(500).json({ error: `Failed to audit GitHub repository: ${err.message}` });
+    }
+}
+
 module.exports = {
+    auditGithubRepo,
     getLiveRemediation,
     getTestPypi,
     auditRequirements,

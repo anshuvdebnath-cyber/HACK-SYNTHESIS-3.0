@@ -170,7 +170,7 @@ export async function runLiveMaltaAudit(input: AuditInput): Promise<MaltaAuditRe
 
 function mapBackendToAuditResult(backendDeps: any[]): MaltaAuditResult {
   const dependencies: DependencyNode[] = backendDeps.map((dep: any) => {
-    const instVer = dep.currentVersion ? (dep.currentVersion.startsWith('v') ? dep.currentVersion : `v${dep.currentVersion}`) : 'v1.0.0';
+    const instVer = (dep.currentVersion && dep.currentVersion !== 'unknown') ? (dep.currentVersion.startsWith('v') ? dep.currentVersion : `v${dep.currentVersion}`) : (dep.latestVersion ? (dep.latestVersion.startsWith('v') ? dep.latestVersion : `v${dep.latestVersion}`) : 'v1.0.0');
     const latVer = dep.latestVersion ? (dep.latestVersion.startsWith('v') ? dep.latestVersion : `v${dep.latestVersion}`) : instVer;
     const finalScore = dep.finalScore ?? 0;
     const das = dep.dasDetails || {};

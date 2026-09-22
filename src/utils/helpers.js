@@ -1,22 +1,108 @@
-/**
- * Extracts a GitHub repository URL from PyPI metadata
- */
-function getGithubUrl(pypiData) {
-    const urls = pypiData.info?.project_urls || {};
-    for (const val of Object.values(urls)) {
-        if (typeof val === 'string' && val.includes('github.com')) {
-            return val;
-        }
-    }
-    if (typeof pypiData.info?.home_page === 'string' && pypiData.info.home_page.includes('github.com')) {
-        return pypiData.info.home_page;
+const axios = require('axios');
+
+function isReservedGithubPath(name) {
+    const reserved = ['features', 'pricing', 'enterprise', 'topics', 'trending', 'collections', 'events', 'about', 'contact', 'login', 'signup', 'security', 'site', 'blog', 'orgs'];
+    return reserved.includes((name || '').toLowerCase());
+}
+
+function cleanRepoName(repo) {
+    return (repo || '').replace(/[.,;:?}>)]\]+$/, '').replace(/\.git$/, '');
+}
+
+function cleanGithubUrl(url) {
+    if (!url || typeof url !== 'string') return null;
+    const match = url.match(/https?:\/\/github\.com\/([a-zA-Z0-9_\-\.]+)\/([a-zA-Z0-9_\-\.]+)/);
+    if (match && !isReservedGithubPath(match[1])) {
+        return `https://github.com/${match[1]}/${cleanRepoName(match[2])}`;
     }
     return null;
 }
 
 /**
- * Parses GitHub owner and repo from a GitHub URL
+ * Fully dynamic repository discovery without ANY hardcoded package registries:
+ * Tier 1: PyPI JSON metadata (project_urls, home_page)
+ * Tier 2: PyPI Warehouse HTML (OIDC trusted publishing provenance)
+ * Tier 3: Google deps.dev Open Source Insights API (canonical upstream repository)
+ * Tier 4: Custom documentation homepage crawling (extracts GitHub repo links)
+ * Tier 5: Convention fallback (owner/repo matching package name)
  */
+async function getGithubUrl(pypiData) {
+    if (!pypiData || !pypiData.info) return null;
+    const pkgName = (pypiData.info.name || '').toLowerCase().trim();
+
+    // 1. Direct PyPI metadata project_urls (fastest, covers majority of packages)
+    const urls = pypiData.info.project_urls || {};
+    for (const val of Object.values(urls)) {
+        if (typeof val === 'string' && val.includes('github.com')) {
+            const cleaned = cleanGithubUrl(val);
+            if (cleaned) return cleaned;
+        }
+    }
+
+    // 2. Direct PyPI home_page check
+    if (typeof pypiData.info.home_page === 'string' && pypiData.info.home_page.includes('github.com')) {
+        const cleaned = cleanGithubUrl(pypiData.info.home_page);
+        if (cleaned) return cleaned;
+    }
+
+    // 3. PyPI description/summary scan
+    const desc = pypiData.info.description || pypiData.info.summary || '';
+    if (typeof desc === 'string') {
+        const match = desc.match(/https?:\/\/github\.com\/([a-zA-Z0-9_\-\.]+)\/([a-zA-Z0-9_\-\.]+)/);
+        if (match && !isReservedGithubPath(match[1])) {
+            return `https://github.com/${match[1]}/${cleanRepoName(match[2])}`;
+        }
+    }
+
+    // 4. Dynamic Discovery: PyPI Warehouse Project HTML (extracts OIDC Publishing Repo)
+    try {
+        const pRes = await axios.get(`https://pypi.org/project/${encodeURIComponent(pkgName)}/`, { timeout: 3000 });
+        const pubMatch = pRes.data.match(/Publishing repository[\s\S]*?href=["'](https:\/\/github\.com\/[^\/"']+\/[^\/"'\s]+)/i);
+        if (pubMatch) {
+            const cleaned = cleanGithubUrl(pubMatch[1]);
+            if (cleaned) return cleaned;
+        }
+        const tabMatch = pRes.data.match(/href=["'](https:\/\/github\.com\/([a-zA-Z0-9_\-\.]+)\/([a-zA-Z0-9_\-\.]+))["'][^>]*rel=["'][^"']*noopener/i);
+        if (tabMatch && !isReservedGithubPath(tabMatch[2])) {
+            const cleaned = cleanGithubUrl(tabMatch[1]);
+            if (cleaned) return cleaned;
+        }
+    } catch (e) {}
+
+    // 5. Dynamic Discovery: Google deps.dev Open Source Insights API
+    try {
+        const dRes = await axios.get(`https://api.deps.dev/v3/systems/pypi/packages/${encodeURIComponent(pkgName)}`, { timeout: 3000 });
+        const versions = dRes.data.versions || [];
+        const latest = versions[versions.length - 1]?.versionKey?.version;
+        if (latest) {
+            const vRes = await axios.get(`https://api.deps.dev/v3/systems/pypi/packages/${encodeURIComponent(pkgName)}/versions/${encodeURIComponent(latest)}`, { timeout: 3000 });
+            const source = vRes.data.relatedProjects?.find(p => p.relationType === 'SOURCE_REPO');
+            if (source?.projectKey?.id) {
+                return `https://${source.projectKey.id}`;
+            }
+        }
+    } catch (e) {}
+
+    // 6. Dynamic Discovery: Crawl custom documentation homepage (e.g. numba.pydata.org)
+    const homePage = pypiData.info.home_page;
+    if (homePage && typeof homePage === 'string' && homePage.startsWith('http') && !homePage.includes('github.com')) {
+        try {
+            const hRes = await axios.get(homePage, { headers: { 'User-Agent': 'RepoVitals/1.0' }, timeout: 3000 });
+            const m = hRes.data.match(/https?:\/\/github\.com\/([a-zA-Z0-9_\-\.]+)\/([a-zA-Z0-9_\-\.]+)/);
+            if (m && !isReservedGithubPath(m[1])) {
+                return `https://github.com/${m[1]}/${cleanRepoName(m[2])}`;
+            }
+        } catch (e) {}
+    }
+
+    // 7. Convention fallback: owner/repo matching package name
+    if (pkgName && !pkgName.includes('/')) {
+        return `https://github.com/${pkgName}/${pkgName}`;
+    }
+
+    return null;
+}
+
 function parseGithubRepo(githubUrl) {
     if (!githubUrl) return null;
     try {

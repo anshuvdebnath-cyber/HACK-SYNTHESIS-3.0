@@ -1,3 +1,4 @@
+const axios = require('axios');
 // GitHub API service utilizing throttled githubClient and 5-minute memory caching
 const { githubClient } = require('../utils/clients');
 const { getCachedData, setCachedData } = require('../utils/cache');
@@ -125,7 +126,59 @@ async function fetchRepoDataWithCache(owner, repo, token, wbStart, weStart) {
     return freshData;
 }
 
+
+/**
+ * Fetches requirements.txt (or fallback environment.yml) from a GitHub repository
+ */
+async function fetchRepoRequirements(owner, repo, token, branch = null) {
+    const headers = {
+        'User-Agent': 'RepoVitals-Audit',
+        ...(token ? { Authorization: 'token ' + token } : {})
+    };
+
+    const targetFiles = [
+        'requirements.txt',
+        'requirements/requirements.txt',
+        'requirements-dev.txt',
+        'environment.yml',
+        'environment.yaml'
+    ];
+
+    for (const filename of targetFiles) {
+        try {
+            const branchParam = branch ? '?ref=' + encodeURIComponent(branch) : '';
+            const url = 'https://api.github.com/repos/' + owner + '/' + repo + '/contents/' + filename + branchParam;
+            const res = await githubClient(url, { headers, timeout: 10000 });
+            if (res.data && res.data.content) {
+                const text = Buffer.from(res.data.content, 'base64').toString('utf8');
+                return { filename, content: text };
+            }
+        } catch (err) {
+            // Try next candidate
+        }
+    }
+
+    // Fallback: raw.githubusercontent.com
+    const branchesToTry = branch ? [branch, 'main', 'master'] : ['main', 'master'];
+    for (const b of branchesToTry) {
+        try {
+            const rawUrl = 'https://raw.githubusercontent.com/' + owner + '/' + repo + '/' + b + '/requirements.txt';
+            const res = await axios.get(rawUrl, {
+                headers: { 'User-Agent': 'RepoVitals-Audit' },
+                timeout: 8000
+            });
+            if (typeof res.data === 'string' && res.data.trim().length > 0) {
+                return { filename: 'requirements.txt', content: res.data };
+            }
+        } catch (err) {}
+    }
+
+    return null;
+}
+
+
 module.exports = {
+    fetchRepoRequirements,
     fetchRepoCommitData,
     fetchRepoPulls,
     fetchRepoDataWithCache

@@ -424,28 +424,49 @@ pymorphy2==0.9.1"
               Directly crawl continuous integration artifacts, lockfiles, and git commit history from any public repository.
             </p>
 
-            {/* Input + Branch Group */}
-            <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
+            {/* Input + Branch Group (Clutter-free & Smart URL Normalization) */}
+            <div className="space-y-2.5" onClick={(e) => e.stopPropagation()}>
               <div className="flex rounded-xl shadow-xs border border-slate-300 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 bg-white overflow-hidden">
-                <span className="inline-flex items-center px-2.5 bg-slate-50 text-slate-500 font-mono text-[11px] border-r border-slate-200 select-none">
-                  github.com/
+                <span className="inline-flex items-center px-3 bg-slate-50 text-slate-600 font-mono text-xs border-r border-slate-200 select-none">
+                  <svg className="w-4 h-4 text-slate-700 mr-1.5" fill="currentColor" viewBox="0 0 24 24">
+                    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+                  </svg>
+                  Repo
                 </span>
                 <input
                   type="text"
                   value={input.repoUrl}
-                  onChange={(e) => setInput({ ...input, repoUrl: e.target.value, mode: 'github' })}
-                  placeholder="organization/repository"
-                  className="flex-1 min-w-0 px-2.5 py-2 text-xs font-mono text-slate-900 focus:outline-none"
+                  onChange={(e) => {
+                    let val = e.target.value.trim();
+                    if (val.startsWith('https://github.com/')) {
+                      val = val.replace('https://github.com/', '');
+                    } else if (val.startsWith('http://github.com/')) {
+                      val = val.replace('http://github.com/', '');
+                    } else if (val.startsWith('github.com/')) {
+                      val = val.replace('github.com/', '');
+                    }
+                    setInput({ ...input, repoUrl: val, mode: 'github' });
+                  }}
+                  placeholder="https://github.com/tatsu-lab/stanford_alpaca or owner/repo"
+                  className="flex-1 min-w-0 px-3 py-2 text-xs font-mono text-slate-900 placeholder:text-slate-400 focus:outline-none"
                 />
                 <select
                   value={input.branch}
                   onChange={(e) => setInput({ ...input, branch: e.target.value })}
-                  className="border-l border-slate-200 bg-slate-50 px-2 py-2 text-xs font-mono text-slate-700 focus:outline-none cursor-pointer"
+                  className="border-l border-slate-200 bg-slate-50 px-2.5 py-2 text-xs font-mono text-slate-700 focus:outline-none cursor-pointer hover:bg-slate-100 transition-colors"
+                  title="Branch"
                 >
                   <option value="main">main</option>
                   <option value="master">master</option>
-                  <option value="v0.4.0">v0.4.0</option>
                 </select>
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] text-slate-500 px-0.5">
+                <span className="flex items-center gap-1 text-emerald-700 font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                  Auto-extracts requirements.txt & dependencies
+                </span>
+                <span className="font-mono text-[10px] text-slate-400">paste full URL or owner/repo</span>
               </div>
 
               {/* Quick Presets */}

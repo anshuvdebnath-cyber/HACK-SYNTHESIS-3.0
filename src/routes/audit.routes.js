@@ -14,6 +14,10 @@ const upload = multer({
 // GET /api/test-pypi - Health check for PyPI registry
 router.get('/test-pypi', auditController.getTestPypi);
 
+// POST /api/audit-repo - Directly audit a GitHub repo's requirements.txt
+router.post('/audit-repo', auditController.auditGithubRepo);
+router.post('/audit-github-repo', auditController.auditGithubRepo);
+
 // POST /api/audit - Audit requirements.txt using MALTA scoring engine
 router.post('/audit', auditController.auditRequirements);
 

@@ -7,6 +7,7 @@ const { fetchWithRetry } = require('./helpers');
 const githubLimiter = new RateLimiter(1500);    // 1.5s between GitHub calls
 const pypiStatsLimiter = new RateLimiter(300);  // 300ms between pypistats calls
 const pypiLimiter = new RateLimiter(200);       // 200ms between PyPI calls
+const osvLimiter = new RateLimiter(200);        // 200ms between OSV calls
 
 // Throttled GitHub client with automatic rate limit quota monitoring
 const githubClient = (url, options) =>
@@ -31,4 +32,10 @@ const pypiClient = (url, options) =>
         fetchWithRetry(() => axios.get(url, options), 3, 'PyPI')
     );
 
-module.exports = { githubClient, pypiStatsClient, pypiClient };
+// Throttled OSV.dev vulnerability client
+const osvClient = (url, data, options) =>
+    osvLimiter.schedule(() =>
+        fetchWithRetry(() => axios.post(url, data, options), 3, 'OSV')
+    );
+
+module.exports = { githubClient, pypiStatsClient, pypiClient, osvClient };
